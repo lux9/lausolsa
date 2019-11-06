@@ -1,0 +1,327 @@
+<!-- Quick Actions form -->
+<div class="modal fade" id="quickActionsModal" tabindex="-1" role="dialog" aria-labelledby="quickActionsModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="quickActionsModalLabel">Acciones rápidas</h5>
+        <button type="button" id="quick_actions_close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <form id="quick_actions_form" class="needs-validation" novalidate action="#" method="get" enctype="multipart/form-data">
+        <div class="modal-body">
+          <div class="container">
+            <!-- Step 1 -->
+            <div class="row py-2" id="quick_action_step1">
+              <div class="col">
+                <% locals[:on_client_quick_filter_js] = "quickActionsStep2('client', input_value, client_id);" %>
+                <%= erb :'forms/client_quick_filter', locals: locals %>
+              </div>
+              <div class="col">
+                <% locals[:on_employee_quick_filter_js] = "quickActionsStep2('employee', input_value, employee_id);" %>
+                <%= erb :'forms/employee_quick_filter', locals: locals %>
+              </div>
+            </div>
+            <!-- Step 2 -->
+            <div class="row py-2 d-none" id="quick_action_step2_employee">
+              <div class="col">
+                <span style="vertical-align: middle;">
+                  Empleados: <span id="quick_action_step2_employee_list"></span><br>
+                  Acción: <select name="action" class="selectpicker" data-width="auto">
+                          <% if user_matches_type(:late_arrival_new) %>
+                            <option>Llegada tarde</option>
+                          <% end %>
+                          <% if user_matches_type(:absence_new) %>
+                            <option>Ausencia</option>
+                          <% end %>
+                          </select><br>
+                  <% params[:date] = Date.today.to_s if params[:date].nil? %>
+                  Fecha: <%= em_input 'date', 'date', '', Date.today.to_s %>
+                  <span id="quick_action_step3_employee_list" class="d-block" style="display: block; max-height: 200px; overflow-y: auto;"></span>
+                  <span id="quick_action_step4_employee_result" class="d-block" style="max-height: 200px"></span>
+                </span>
+              </div>
+            </div>
+            <div class="row py-2 d-none" id="quick_action_step2_client">
+              <div class="col">
+                <span style="vertical-align: middle;">
+                  Clientes: <span id="quick_action_step2_client_list"></span><br>
+                  Acción: <select name="action" class="selectpicker" data-width="auto">
+                          <% if user_matches_type(:shift_backup_new) %>
+                            <option>Pedido de refuerzo</option>
+                          <% end %>
+                          </select><br>
+                  <% params[:date] = Date.today.to_s if params[:date].nil? %>
+                  Fecha: <%= em_input 'date', 'date', '', Date.today.to_s %>
+                  <span id="quick_action_step3_client_list" class="d-block" style="max-height: 200px"></span>
+                  <span id="quick_action_step4_client_result" class="d-block" style="max-height: 200px"></span>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" id="quick_actions_cancel" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+          <button type="button" id="quick_actions_submit" class="btn btn-success text-shadow btn-shadow border border-dark border-top-0 border-right-0 disabled" aria-disabled="true">Procesar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script type="text/javascript" charset="utf-8">
+  form_quick_filter = $('#quick_actions_form');
+  let active_type = '';
+
+  $('#quick_actions_cancel').click(function() {
+    quickActionsReset();
+  });
+
+  $('#quick_actions_close').click(function() {
+    quickActionsReset();
+  });
+
+  function quickActionsReset() {
+    active_type = '';
+
+    let client_step1 = form_quick_filter.find('div#quick_action_step1').find('input#client_quick_filter_input');
+    client_step1.attr('disabled', false);
+    client_step1.val('');
+
+    let employee_step1 = form_quick_filter.find('div#quick_action_step1').find('input#employee_quick_filter_input');
+    employee_step1.attr('disabled', false);
+    employee_step1.val('');
+
+    form_quick_filter.find('span#quick_action_step2_employee_list').html('');
+    form_quick_filter.find('div#quick_action_step2_employee').addClass('d-none');
+    form_quick_filter.find('#quick_action_step3_employee_list').html('');
+
+    form_quick_filter.find('span#quick_action_step2_client_list').html('');
+    form_quick_filter.find('div#quick_action_step2_client').addClass('d-none');
+    form_quick_filter.find('#quick_action_step3_client_list').html('');
+
+    form_quick_filter.find('#quick_actions_submit').removeClass('disabled').addClass('disabled');
+
+    form_quick_filter.find('#quick_action_step4_client_result').html('');
+    form_quick_filter.find('#quick_action_step4_employee_result').html('');
+  }
+
+  function quickActionsStep2(element_type, element_name, element_id) {
+    if (active_type !== '' && active_type !== element_type)
+    {
+      quickActionsReset()
+    }
+    active_type = element_type;
+
+    let form_step2 = form_quick_filter.find('div#quick_action_step2_' + element_type);
+    let list_step2 = $('#quick_action_step2_' + element_type + '_list');
+    let list_step3 = $('#quick_action_step3_' + element_type + '_list');
+
+    let close_button = $('<span/>').attr('aria-hidden', 'true').addClass('d-inline').html('&nbsp;&times;');
+    let new_input = $('<input/>').attr('id', 'input_quick_'+element_type+'_'+element_id).attr('name', element_type).attr('type', 'hidden').val(element_id);
+    let new_badge = $('<button/>').attr('type', 'button').addClass('btn').addClass('btn-secondary').addClass('btn-sm').html(element_name).append(close_button);
+
+    let element_badge = $('<span/>').attr('id', 'step2_element_'+element_id).addClass('d-inline');
+    element_badge.append(new_input);
+    element_badge.append(new_badge);
+
+    form_step2.removeClass('d-none');
+    if(list_step2.find('input#input_quick_' + element_type + '_' + element_id).length === 0)
+    {
+      form_quick_filter.find('#quick_actions_submit').removeClass('disabled');
+
+      let step3_content = quickActionsStep3(element_type, element_name, element_id);
+      let step3_list = $('<span/>').attr('id', 'step3_element_'+element_id).addClass('d-block');
+      step3_list.append(step3_content);
+
+      list_step2.append(element_badge);
+      list_step2.append(' ');
+      list_step3.append(step3_list);
+      list_step3.append(' ');
+    }
+  }
+
+  function quickActionsStep3(element_type, element_name, element_id)
+  {
+    step3_content = $('<span/>').addClass('d-block');
+
+    if (element_type === 'employee')
+    {
+      step3_content.html('<strong>Turnos de ' + element_name + '</strong><br>');
+    }
+    else if (element_type === 'client')
+    {
+      step3_content.html('<strong>Estaciones de ' + element_name + '</strong><br>');
+    }
+
+    $.ajax({
+      dataType: "json",
+      url: '/' + element_type + '/' + element_id,
+      cache: false,
+      success: function (data) {
+        $.each(data, function (key, element) {
+          if (key === 'locations' && element_type === 'client')
+          {
+            if (element.length > 0)
+            {
+              let label = $('<label/>').html('Estación: ');
+              let select = $('<select/>').addClass('custom-select').addClass('d-inline').attr('name', element_type + '_' + element_id + '_location');
+              element.forEach(function(l) {
+                let option = $('<option/>').attr('value', l.id).html(l.name);
+                select.append(option);
+              });
+              label.append(select);
+              label.append('<br>');
+              step3_content.append(label);
+            }
+            else
+            {
+              step3_content.append('El cliente no tiene estaciones<br>');
+            }
+          }
+
+          if (key === 'shifts' && element_type === 'employee')
+          {
+            if (element.length > 0)
+            {
+              element.forEach(function(s) {
+                let label = $('<label/>');
+                let option = $('<input/>').attr('type', 'checkbox').attr('checked', true).attr('name', element_type + '_' + element_id + '_shifts[]').val(s.id);
+                label.append(option);
+                label.append('&nbsp;' + s.client + ' - ' + s.location + '<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;' + s.dates);
+                step3_content.append(label);
+              });
+            }
+            else
+            {
+              step3_content.append('El empleado no tiene turnos asignados<br>');
+            }
+          }
+        });
+      }
+    });
+
+    return step3_content;
+  }
+
+  $('button#quick_actions_submit').click(function(e) {
+    e.preventDefault();
+    if(!$(this).hasClass('disabled')) {
+      let mode = $('div#quick_action_step2_client').hasClass('d-none') ? 'employee' : 'client';
+      let action = $('#quick_action_step2_' + mode).find('select[name=action]').val();
+      let span_step4 = $('span#quick_action_step4_'+mode+'_result');
+      span_step4.html('');
+
+      if(mode === 'client')
+      {
+        $("span[id^='step2_element_']").each(function(){
+          let client_id = $(this).attr('id').replace(/^step2_element_/, '');
+          let client_name = $(this).find('button').html().replace(/\<span.*/, '');
+          let step2_element = $('#quick_action_step2_client');
+          let step3_element = $('#step3_element_'+client_id);
+          let location_select = step3_element.find("select[name=client_"+client_id+"_location]");
+          let date_input = step2_element.find("input[name=date]");
+
+          if (action === 'Pedido de refuerzo') {
+            if (location_select.length > 0) {
+              let location_id = location_select.val();
+              let date_value = date_input.val();
+              let warning_badge = $('<div/>').addClass('alert').addClass('alert-warning').attr('role', 'alert').html('Finaliza la carga para ' + client_name + ' en: <a href="/shift_backup/new/' + location_id + '?date=' + date_value + '" target="_blank">/shift_backup/new/' + location_id + '?date=' + date_value + '</a>');
+              span_step4.append(warning_badge);
+            } else {
+              let warning_badge = $('<div/>').addClass('alert').addClass('alert-danger').attr('role', 'alert').html('No se pudo procesar ' + client_name + ' (no tiene estaciones)');
+              span_step4.append(warning_badge);
+            }
+          }
+        })
+      }
+      else if(mode === 'employee')
+      {
+        $("span[id^='step2_element_']").each(function() {
+          let employee_id = $(this).attr('id').replace(/^step2_element_/, '');
+          let employee_name = $(this).find('button').html().replace(/\<span.*/, '');
+          let step2_element = $('#quick_action_step2_employee');
+          let step3_element = $('#step3_element_' + employee_id);
+          let date_input = step2_element.find("input[name=date]");
+          let shifts_input = step3_element.find("input[name^=employee_" + employee_id + "_shifts]:checked");
+
+          if(action === 'Llegada tarde')
+          {
+            if(shifts_input.length > 0) {
+              shifts_input.each(function(){
+                let shift_value = $(this).val();
+                let post_vars = { shift_id: shift_value, date: date_input.val(), reason: 'Sin motivo (carga rápida)' };
+
+                $.ajax({
+                  type: "POST",
+                  dataType: "json",
+                  url: '/employee/late_arrival/new/' + employee_id,
+                  cache: false,
+                  data: post_vars,
+                  success: function (responseData) {
+                    if(responseData['response'] === 'ok')
+                    {
+                      let message = $('<div/>').addClass('alert').addClass('alert-success').attr('role', 'alert').html('Cargada llegada tarde para ' + employee_name + ' (turno ' + shift_value + ') - <a href="'+encodeURI(responseData['url'])+'">Detalles</a>');
+                      span_step4.append(message);
+                    } else {
+                      let message = $('<div/>').addClass('alert').addClass('alert-danger').attr('role', 'alert').html('No pudo cargarse para ' + employee_name + ' (turno ' + shift_value + ') - <a href="'+encodeURI(responseData['url'])+'">Detalles</a>');
+                      span_step4.append(message);
+                    }
+                  },
+                  error: function (responseData) {
+                    let message = $('<div/>').addClass('alert').addClass('alert-danger').attr('role', 'alert').html('Fallo desconocido en ' + employee_name + ' (turno ' + shift_value + ')');
+                    span_step4.append(message);
+                  }
+                });
+              });
+            } else {
+              let warning_badge = $('<div/>').addClass('alert').addClass('alert-danger').attr('role', 'alert').html('No se pudo procesar ' + employee_name + ' (no tiene turnos asignados)');
+              span_step4.append(warning_badge);
+            }
+          }
+
+          if(action === 'Ausencia') {
+            let date_value = date_input.val();
+            let post_vars = { daterange: date_value + ' - ' + date_value, reason: 'Sin motivo (carga rápida)', notice_date: date_value };
+            $.ajax({
+              type: "POST",
+              dataType: "json",
+              url: '/absence/new/' + employee_id,
+              cache: false,
+              data: post_vars,
+              success: function (responseData) {
+                if(responseData['response'] === 'ok')
+                {
+                  let message = $('<div/>').addClass('alert').addClass('alert-success').attr('role', 'alert').html('Cargada ausencia para ' + employee_name + ' - <a href="'+encodeURI(responseData['url'])+'">Asignar suplentes</a>');
+                  span_step4.append(message);
+                } else {
+                  let message = $('<div/>').addClass('alert').addClass('alert-danger').attr('role', 'alert').html('No pudo cargarse para ' + employee_name + ' - <a href="'+encodeURI(responseData['url'])+'">Detalles</a>');
+                  span_step4.append(message);
+                }
+              },
+              error: function (responseData) {
+                let message = $('<div/>').addClass('alert').addClass('alert-danger').attr('role', 'alert').html('Fallo desconocido en ' + employee_name);
+                span_step4.append(message);
+              }
+            });
+          }
+        });
+      }
+    }
+  });
+
+  $(document).on('click', 'span[id^=\'step2_element_\'] button', function(e) {
+    e.preventDefault();
+    if (form_quick_filter.find('div#quick_action_step2_employee span[id^=step2_element_]').length === 1 ||
+        form_quick_filter.find('div#quick_action_step2_client span[id^=step2_element_]').length === 1)
+    {
+      quickActionsReset();
+    }
+    else
+    {
+      element_id = parseInt($(this).parent("span[id^='step2_element_']").attr('id').replace(/^step2_element_/, ''));
+      form_quick_filter.find("span[id^='step2_element_"+element_id+"']").remove();
+      form_quick_filter.find("span[id^='step3_element_"+element_id+"']").remove();
+    }
+  });
+</script>

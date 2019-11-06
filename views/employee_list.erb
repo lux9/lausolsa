@@ -1,0 +1,73 @@
+<button id="employee-filter-button" data-toggle="modal" data-target="#employeeFilterModal" type="button" class="btn btn-success text-shadow btn-shadow border border-dark float-right">Filtrar</button>
+
+<% locals[:on_employee_quick_filter_js] = "location.href = \"/employee/\" + employee_id;" %>
+<div class="float-right px-2"><%= erb :'forms/employee_quick_filter', locals: locals %></div>
+<% if user_matches_type(:employee_new) %>
+  <a href="/employee/new" class="mx-2 btn btn-success text-shadow btn-shadow border border-dark border-top-0 border-right-0 text-white float-right">Nuevo empleado</a>
+<% end %>
+
+<h3 class="pb-0 mb-0">Lista de empleados</h3>
+<% if params[:show_archived].nil? || params[:show_archived] == '0' %>
+  <a class="small" href="/employee/list?show_archived=1&<%= build_query_string('show_archived') %>">(mostrar empleados archivados)</a><br>
+<% else %>
+  <a class="small" href="/employee/list?<%= build_query_string('show_archived') %>">(ocultar empleados archivados)</a><br>
+<% end %>
+
+<div class="text-center mx-auto">
+  <nav style="display: inline-block" aria-label="pagination">
+    <ul class="pagination">
+      <li class='page-item <%= params[:starting_letter].nil? ? 'active' : '' %>'>
+        <a class='page-link small p-2' href='/employee/list'>#</a>
+      </li>
+      <% ('A'..'Z').each do |letter| %>
+        <li class='page-item <%= params[:starting_letter] == letter ? 'active' : '' %>'>
+          <a class='page-link small p-2' href='/employee/list?starting_letter=<%= letter %>'><%= letter %></a>
+        </li>
+      <% end %>
+    </ul>
+  </nav>
+</div>
+
+<% if employees.empty? %>
+  <strong>No hay empleados para mostrar</strong><br>
+<% else %>
+  <div class="d-flex justify-content-center flex-wrap">
+    <% employees.each do |employee| %>
+      <div class="mx-3 my-2">
+        <div class="card text-center card-shadow" style="width: 20em;">
+          <a href="/employee/<%= employee.id %>" class="no-decoration">
+            <div class="card-header <%= employee[:archived] ? 'bg-secondary' : 'bg-success' %>">
+              <strong>
+                <span class="d-inline-block text-truncate text-shadow text-white" style="max-width: 17.5em;">
+                  #<%= employee[:file_number].nil? || employee[:file_number] == '' ? '0' : employee[:file_number] %> - <%= employee[:last_name] %>, <%= employee[:first_name] %>
+                </span>
+              </strong>
+            </div>
+            <div class="row no-gutters">
+              <div class="col-md-4">
+                <img src="<%= em_user_avatar employee.id %>" style="width:100%;">
+              </div>
+              <div class="col-md-8 pt-3">
+                <p>
+                  Trabajo: <%= employee.type.type %><br>
+                  <% working_hours = employee_assigned_hours(employee) %>
+                  Jornada: <%= trim working_hours %> horas<br>
+                  <% if working_hours < employee.max_weekly_hours %>
+                    <strong><%= trim(employee.max_weekly_hours - working_hours) %> horas libres</strong><br>
+                  <% end %>
+                </p>
+              </div>
+            </div>
+          </a>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  &nbsp;<br>
+  <% url_prefix = '/employee/list/' %>
+  <%= em_pagination(url_prefix, employees.current_page, employees.page_count) %>
+<% end %>
+
+<% locals[:request_uri] = '/employee' + request.path_info %>
+<%= erb :'forms/employee_filter', locals: locals %>

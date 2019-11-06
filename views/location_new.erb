@@ -1,0 +1,51 @@
+<% if params[:invalid] == '1' %>
+  <div class="alert alert-danger" role="alert">Falló el ingreso</div><br>
+<% end %>
+
+<% if request.path_info =~ /new/ %>
+  <% if params[:parent_id] %>
+    <h3>Nueva sub-estación de trabajo:</h3>
+  <% else %>
+    <h3>Nueva estación de trabajo:</h3>
+  <% end %>
+  <% form_uri = "/location/new/#{params[:client_id]}"
+     form_uri += params[:parent_id] ? "/#{params[:parent_id]}" : '' %>
+<% elsif defined? location %>
+  <h3>Editando <%= location.name %></h3>
+  <% form_uri = "/location/#{request.path_info}" %>
+<% end %>
+
+<form action='<%= form_uri %>' method="post">
+  <%= em_input 'text', 'name', 'Nombre', 'Sucursal 2, Piso 5, Oficina Administración' %>
+  <% if params[:parent_id] %>
+    <% parent_location = Location[params[:parent_id]] %>
+    <% params[:address_street] ||= parent_location[:address_street] %>
+    <% params[:address_number] ||= parent_location[:address_number] %>
+    <% params[:address_extra] ||= parent_location[:address_extra] %>
+    <% params[:address_cp] ||= parent_location[:address_cp] %>
+    <% params[:address_city] ||= parent_location[:address_city] %>
+    <% params[:address_province] ||= parent_location[:address_province] %>
+    <% params[:address_country] ||= parent_location[:address_country] %>
+  <% elsif defined?(client) %>
+    <% params[:address_street] ||= client[:address_street] %>
+    <% params[:address_number] ||= client[:address_number] %>
+    <% params[:address_extra] ||= client[:address_extra] %>
+    <% params[:address_cp] ||= client[:address_cp] %>
+    <% params[:address_city] ||= client[:address_city] %>
+    <% params[:address_province] ||= client[:address_province] %>
+    <% params[:address_country] ||= client[:address_country] %>
+  <% end %>
+  <%= em_input 'text', 'address_street', 'Calle', 'Av Rivadavia' %>
+  <%= em_input 'number', 'address_number', 'Nro', '0000' %>
+  <%= em_input 'text', 'address_extra', 'Extra', 'Interno, torre, dpto, ...', true %>
+  <%= em_input 'number', 'address_cp', 'Código Postal', '1234' %>
+  <%= em_input 'text', 'address_city', 'Ciudad', 'Ciudad de Buenos Aires' %>
+  <%= em_provincias 'address_province', 'Provincia' %>
+  <%= em_countries 'address_country', 'País' %>
+  <% if params[:parent_id] %>
+    <input type="hidden" name="parent_id" value="<%= params[:parent_id] %>">
+  <% end %>
+  <input type="hidden" name="client_id" value="<%= params[:client_id] %>">
+  &nbsp;<br>
+  <input type='submit' value="Enviar" />
+</form>

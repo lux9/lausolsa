@@ -1,0 +1,22 @@
+<!-- Avatar upload form -->
+<div class="modal fade" id="avatarModal" tabindex="-1" role="dialog" aria-labelledby="avatarModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="avatarModalLabel">Nuevo avatar</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <form action="/employee/avatar/<%= employee.id %>" method="post" enctype="multipart/form-data">
+        <div class="modal-body">
+          <%= em_file_input 'avatar', 'Ruta al archivo', 'image/*' %>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-success text-shadow btn-shadow border border-dark border-top-0 border-right-0">Enviar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

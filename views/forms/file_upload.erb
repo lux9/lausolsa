@@ -1,0 +1,27 @@
+<!-- File upload form -->
+<div class="modal fade" id="uploadModal" tabindex="-1" role="dialog" aria-labelledby="uploadModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="uploadModalLabel">Nuevo archivo</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <form class="needs-validation" novalidate action="/employee/file/<%= employee.id %>" method="post" enctype="multipart/form-data">
+        <div class="modal-body">
+          <%= em_input 'text', 'description', 'Descripción del archivo' %>
+          Tipo de archivo: <span class="text-primary">(R)</span><br>
+          <% employee_file_types.each do |file_type| %>
+            <%= em_radio 'type', file_type.id, file_type.type %>
+          <% end %><br>
+          <%= em_file_input 'file', 'Ruta al archivo' %>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-success text-shadow btn-shadow border border-dark border-top-0 border-right-0">Enviar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

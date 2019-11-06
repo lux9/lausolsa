@@ -1,0 +1,43 @@
+<!-- License File upload form -->
+<div class="modal fade" id="licenseModal" tabindex="-1" role="dialog" aria-labelledby="licenseModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="licenseModalLabel">Carga de parte médico</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <form class="needs-validation" novalidate action="/absence/license/new" method="post" enctype="multipart/form-data">
+        <div class="modal-body">
+          <input type="hidden" name="absence_id">
+          <%= em_input 'text', 'doctor_license', 'Matrícula del médico' %>
+          <%= em_input 'text', 'doctor_name', 'Nombre del médico' %>
+          <%= em_input 'text', 'message', 'Parte médico / mensaje' %>
+          <%= em_input 'date', 'license_start_date', 'Inicio de licencia' %>
+          <%= em_input 'date', 'license_end_date', 'Fin de licencia' %>
+          <%= em_checkbox 'mark_justified', 'Marcar ausencias como justificadas' %><br>
+          <%= em_input 'file', 'file', 'Archivo o foto del parte médico' %>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-success text-shadow btn-shadow border border-dark border-top-0 border-right-0">Enviar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script type="text/javascript" charset="utf-8">
+  $(".licence-upload-link").click(function(){
+    let absence_data = $.parseJSON($(this).attr("data-absence"));
+    let license_modal = $("#licenseModal");
+
+    license_modal.find('input[name="absence_id"]').val(absence_data['id']);
+    license_modal.find('input[name="license_start_date"]').val(absence_data['start_date']);
+    // license_modal.find('input[name="license_start_date"]').prop('readonly', true);
+    license_modal.find('input[name="license_end_date"]').val(absence_data['end_date']);
+    // license_modal.find('input[name="license_end_date"]').prop('readonly', true);
+    license_modal.find('input[name="mark_justified"]').prop('checked', true);
+  })
+</script>

@@ -1,0 +1,48 @@
+version: '3'
+services:
+  postgres:
+    image: postgres:11-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: rubycrm
+      POSTGRES_PASSWORD: qBXJwk_6a6s5g
+    ports:
+      - 127.0.0.1:5432:5432
+    volumes:
+      - /opt/postgres:/var/lib/postgresql/data
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    environment:
+      PGADMIN_DEFAULT_EMAIL: kuteninja@gmail.com
+      PGADMIN_DEFAULT_PASSWORD: g0tmilk?
+    ports:
+      - 127.0.0.1:8080:80
+    depends_on:
+      - postgres
+    volumes:
+      - /opt/pgadmin:/var/lib/pgadmin
+
+  redis:
+    image: redis:5-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - 127.0.0.1:6379:6379
+    volumes:
+      - /opt/redis:/data
+
+#  it's best to use rerun
+#  web:
+#    build: .
+#    environment:
+#      RACK_ENV: development
+#      APP_ENV: development
+#    volumes:
+#      - /opt/web/avatars:/opt/web/public/avatars
+#      - /opt/web/upload:/opt/web/public/upload
+#    ports:
+#      - 127.0.0.1:3000:3000
+#    depends_on:
+#      - postgres
+#      - redis

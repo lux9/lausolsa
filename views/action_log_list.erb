@@ -1,0 +1,51 @@
+<div class="float-right" style="width: 25em;">
+  <div class="row">
+    <div class="col">
+      <% locals[:on_client_quick_filter_js] = "location.href = \"/action_log/client/\" + client_id;" %>
+      <%= erb :'forms/client_quick_filter', locals: locals %>
+    </div>
+    <div class="col">
+      <% locals[:on_employee_quick_filter_js] = "location.href = \"/action_log/employee/\" + employee_id;" %>
+      <%= erb :'forms/employee_quick_filter', locals: locals %>
+    </div>
+  </div>
+</div>
+
+<h3>Registro de acciones</h3>
+&nbsp;<br>
+
+<% if log_lines.empty? %>
+  <strong>No hay acciones en el registro</strong><br>
+<% else %>
+  <table class="table table-bordered table-striped small">
+    <thead>
+    <tr>
+      <th scope="col">Fecha</th>
+      <th scope="col">Usuario</th>
+      <th scope="col">Entrada del registro</th>
+    </tr>
+    </thead>
+    <tbody>
+    <% log_lines.each do |log_line| %>
+      <tr>
+        <th scope="row"><span class="text-nowrap"><%= log_line.date_time.to_s[0, 16] %></span></th>
+        <td><span class="text-nowrap"><%= log_line.user.name %></span></td>
+        <td>
+          <%= log_line.message %>
+          <% if log_line.message != log_line.details %>
+            <a href="#" id="toggle_details_<%= log_line.id %>">(ver más)</a><br>
+            <span id="details_<%= log_line.id %>" style="display: none" class="small"><%= log_line.details %></span>
+            <script>
+              $('#toggle_details_<%= log_line.id %>').click(function(event) { event.preventDefault(); $('span#details_<%= log_line.id %>').toggle(); });
+            </script>
+          <% end %>
+        </td>
+      </tr>
+    <% end %>
+    </tbody>
+  </table>
+
+  &nbsp;<br>
+  <% url_prefix = "/action_log/#{request.path_info[/(recent|(client|location|employee)\/[0-9]+)/]}/" %>
+  <%= em_pagination(url_prefix, log_lines.current_page, log_lines.page_count) %>
+<% end %>

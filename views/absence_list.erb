@@ -1,0 +1,15 @@
+<h3>Lista de ausencias y suplencias</h3>
+<% if params[:invalid] == '1' %>
+  <div class="alert alert-danger" role="alert">Falló el ingreso</div>
+<% end %>
+
+<% if absences.empty? %>
+  <strong>No hay ausencias en los últimos 30 días</strong><br>
+<% else %>
+  <ul>
+    <% absences.each do |absence| %>
+      <% employee = Employee[absence[:absence_id]] %>
+      <li><a href="/employee/<%= employee.id %>"><%= employee.full_name %></a> tiene <%= absence[:count] %> ausencias sin suplente</li>
+    <% end %>
+  </ul>
+<% end %>

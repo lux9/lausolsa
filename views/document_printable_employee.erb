@@ -1,0 +1,8 @@
+<%= em_document_clickables_employee(document.content, employee) %>
+
+<script type="text/javascript" charset="utf-8">
+  $('.clickable').click(function() {
+    response = prompt('¿Valor para el campo?');
+    if(response.length > 0) { $(this).html(response); }
+  });
+</script>

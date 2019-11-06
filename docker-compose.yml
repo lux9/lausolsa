@@ -1,0 +1,83 @@
+version: '3'
+services:
+  postgres:
+    image: postgres:11-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: rubycrm
+      POSTGRES_PASSWORD: qBXJwk_6a6s5g
+    expose:
+      - 5432
+    volumes:
+      - /opt/postgres:/var/lib/postgresql/data
+    labels:
+      - "traefik.enable=false"
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    environment:
+      PGADMIN_DEFAULT_EMAIL: kuteninja@gmail.com
+      PGADMIN_DEFAULT_PASSWORD: g0tmilk?
+    expose:
+      - 80
+    depends_on:
+      - postgres
+    volumes:
+      - /opt/pgadmin:/var/lib/pgadmin
+    labels:
+      - "traefik.frontend.rule=Host:rubycrm-pgadmin.gelonos.com"
+
+  redis:
+    image: redis:5-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    expose:
+      - 6379
+    volumes:
+      - /opt/redis:/data
+    labels:
+      - "traefik.enable=false"
+
+  web_prod:
+    image: registry.gitlab.com/kuteninja/rubycrm:master
+    restart: unless-stopped
+    environment:
+      RACK_ENV: production
+      APP_ENV: production
+    volumes:
+      - /opt/web/avatars:/opt/web/public/avatars
+      - /opt/web/upload:/opt/web/public/upload
+    expose:
+      - 3000
+    labels:
+      - "traefik.frontend.rule=Host:rubycrm.gelonos.com"
+    depends_on:
+      - postgres
+      - redis
+
+  web_dev:
+    image: registry.gitlab.com/kuteninja/rubycrm:develop
+    restart: unless-stopped
+    environment:
+      RACK_ENV: development
+      APP_ENV: development
+    volumes:
+      - /opt/web_dev/avatars:/opt/web/public/avatars
+      - /opt/web_dev/upload:/opt/web/public/upload
+    expose:
+      - 3000
+    labels:
+      - "traefik.frontend.rule=Host:rubycrm-dev.gelonos.com"
+    depends_on:
+      - postgres
+      - redis
+
+  traefik:
+    restart: unless-stopped
+    image: traefik
+    ports:
+      - 8080:8080
+      - 80:80
+    volumes:
+      - ./traefik.toml:/etc/traefik/traefik.toml
+      - /var/run/docker.sock:/var/run/docker.sock

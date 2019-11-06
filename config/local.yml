@@ -1,0 +1,12 @@
+:database:
+  :host: localhost
+  :port: 5432
+  :database: rubycrm_dev
+  :username: rubycrm
+  :password: qBXJwk_6a6s5g
+  :adapter: postgres
+  :encoding: unicode
+
+:session:
+  :redis_server: 'redis://localhost:6379/1'
+  :expires_in: 86400

@@ -1,0 +1,22 @@
+<!-- New job_type form -->
+<div class="modal fade" id="fileTypeModal" tabindex="-1" role="dialog" aria-labelledby="fileTypeModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="fileTypeModalLabel">Nueva categoría de archivos</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <form action="/control_panel/new_file_type" method="post">
+        <div class="modal-body">
+          <%= em_input 'text', 'type', 'Nombre de categoría', '' %>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-success text-shadow btn-shadow border border-dark border-top-0 border-right-0">Enviar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

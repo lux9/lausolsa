@@ -1,0 +1,122 @@
+<h3>Exportado a medida</h3>
+&nbsp;<br>
+
+<div class="container">
+  <div class="row">
+    <h5>Tipo de exportado:</h5>
+  </div>
+  <div class="row">
+    <div class="col">
+      <%= em_radio 'type', 'client', 'Clientes' %>
+      <%= em_radio 'type', 'employee', 'Empleados' %>
+    </div>
+  </div>
+  &nbsp;<br>
+
+  <!-- Client -->
+  <div class="d-none" id="client_container">
+    <div class="row">
+      <h5>Exportado de clientes:</h5>
+    </div>
+    <form action='/export/custom/client' method="post" id="client_form">
+      <div class="row">
+        <div class="col-4">
+          Datos de cliente
+        </div>
+        <div class="col">
+          <select name="client_fields[]" class="selectpicker" multiple>
+            <%= client_import_fields.map { |k, v| "<option value='#{k}'>#{v}</option>" }.join("\n") %>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-4">
+          Turnos de trabajo
+        </div>
+        <div class="col">
+          <select name="client_shift_fields[]" class="selectpicker" multiple>
+            <%= shift_import_fields.reject { |k, v| k == :client_name || k == :location_name }.map { |k, v| "<option value='#{k}'>#{v}</option>" }.join("\n") %>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-4">
+          Datos adicionales
+        </div>
+        <div class="col">
+          <select name="client_extra_fields[]" class="selectpicker" multiple>
+            <%= client_extra_fields.map { |k, v| "<option value='#{k}'>#{v}</option>" }.join("\n") %>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <input type="submit" class="btn btn-success text-shadow btn-shadow border border-dark border-top-0 border-right-0" value="Exportar datos">
+      </div>
+    </form>
+  </div>
+
+  <!-- Employee -->
+  <div class="d-none" id="employee_container">
+    <div class="row">
+      <h5>Exportado de empleados:</h5>
+    </div>
+    <form action='/export/custom/employee' method="post" id="employee_form">
+      <div class="row">
+        <div class="col-4">
+          Datos de empleado
+        </div>
+        <div class="col">
+          <select name="employee_fields[]" class="selectpicker" multiple>
+            <%= employee_import_fields.map { |k, v| "<option value='#{k}'>#{v}</option>" }.join("\n") %>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-4">
+          Turnos de trabajo
+        </div>
+        <div class="col">
+          <select name="employee_shift_fields[]" class="selectpicker" multiple>
+            <%= shift_import_fields.map { |k, v| "<option value='#{k}'>#{v}</option>" }.join("\n") %>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-4">
+          Datos adicionales
+        </div>
+        <div class="col">
+          <select name="employee_extra_fields[]" class="selectpicker" multiple>
+            <%= employee_extra_fields.map { |k, v| "<option value='#{k}'>#{v}</option>" }.join("\n") %>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <input type="submit" class="btn btn-success text-shadow btn-shadow border border-dark border-top-0 border-right-0" value="Exportar datos">
+      </div>
+    </form>
+  </div>
+</div>
+
+<script type="text/javascript" charset="utf-8">
+  function onSelectedType(type) {
+    if(type === 'employee')
+    {
+      $('#employee_container').removeClass('d-none');
+      $('#client_container').addClass('d-none');
+    }
+    else
+    {
+      $('#client_container').removeClass('d-none');
+      $('#employee_container').addClass('d-none');
+    }
+  }
+
+  $('input[name=type]').click(function(){
+    onSelectedType($(this).val())
+  });
+
+  $('input[name=type]:checked').each(function(){
+    onSelectedType($(this).val())
+  });
+</script>

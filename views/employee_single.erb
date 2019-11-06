@@ -1,0 +1,196 @@
+<div class="row">
+  <div class="col-md-4">
+    <h3><%= employee.full_name %></h3>
+    <h5><%= employee.type.type %></h5>
+    <% if employee[:archived] && user_matches_type(:employee_unarchive) %>
+      <a class="confirm" href="/employee/unarchive/<%= employee[:id] %>">re-activar este empleado</a><br>
+    <% elsif !employee[:archived] && user_matches_type(:employee_archive) %>
+      <a class="confirm" href="/employee/archive/<%= employee[:id] %>">dar de baja este empleado</a><br>
+    <% end %>
+    &nbsp;<br>
+
+    <% unless documents.empty? %>
+      <% if user_matches_type(:document_employee) %>
+        <a href="#" data-toggle="modal" data-target="#documentModal" >preparar documento a imprimir</a><br>
+      <% end %>
+    <% end %>
+
+    &nbsp;<br>
+
+    <!-- Información Personal -->
+    <div class="tab-pane fade show active" id="employee_details" role="tabpanel" aria-labelledby="details-tab">
+      <% if user_matches_type(:employee_new) %>
+        <a class="float-right btn btn-success text-shadow btn-shadow border border-dark border-top-0 border-right-0" href="/employee/edit/<%= employee.id %>">Modificar</a>
+      <% end %>
+      <h4>Información personal</h4><br>
+      <% if user_matches_type(:employee_avatar) %>
+        <a href="#" class="mb-4 float-right" id="change-avatar" data-toggle="modal" data-target="#avatarModal">
+          <img src="<%= em_user_avatar employee.id %>"><br>
+          <span class="small float-right text-dark">click para cambiar &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+        </a>
+      <% else %>
+        <img class="mb-4 float-right" src="<%= em_user_avatar employee.id %>"><br>
+      <% end %>
+      <% phones = [employee.phone_mobile,employee.phone_home].reject { |p| p.nil? || p.empty? } %>
+      <strong>Teléfonos:</strong><br>
+      <%= phones.empty? ? 'Ninguno cargado' : phones.join('<br>') %><br>
+      &nbsp;<br>
+      <strong>Domicilio:</strong><br>
+      <%= employee.address_street %> <%= employee.address_number %><br>
+      <% unless employee.address_extra.nil? || employee.address_extra.empty? %>
+        <%= employee.address_extra %><br>
+      <% end %>
+      <%= employee.address_city %> - CP: <%= employee.address_cp %><br>
+      <%= employee.address_province %>, <%= employee.address_country %><br>
+      <% unless employee.comment.nil? || employee.comment.empty? %>
+        &nbsp;<br>
+        <strong>Comentarios:</strong><br>
+        <%= employee.comment %><br>
+      <% end %>
+
+      <!-- Información Fiscal -->
+      Nro de Legajo: <%= employee.file_number %><br>
+      Nacimiento: <%= employee.birthday %><br>
+      Estado Civil: <%= employee.marital_status %><br>
+      Fecha de Ingreso: <%= employee.join_date %><br>
+      <% if !employee.leave_date.nil? && employee.leave_date != employee.join_date %>
+        &nbsp;<br>
+        Fecha de Egreso: <%= employee.leave_date %><br>
+        Motivo de Egreso: <%= employee.leave_reason %><br>
+      <% end %>
+      &nbsp;<br>
+      CUIT / CUIL: <%= employee.cuit %><br>
+      <%= "CBU Bancario: #{employee.cbu}<br>" if !employee.cbu.nil? && employee.cbu != '' %>
+      <%= 'Afiliado al sindicato<br>' if employee.worker_union %>
+      <%= 'Puede trabajar feriados<br>' if employee.works_holidays %>
+      Horas disponibles por semana: <%= employee.max_weekly_hours %><br>
+
+      &nbsp;<br>
+
+      <!-- Fichero -->
+      <div>
+        <% if employee.files.count.zero? %>
+          <p>No hay archivos cargados en este empleado</p>
+        <% else %>
+          <table class="table table-bordered table-striped">
+            <thead>
+            <tr>
+              <th style="width:17%" scope="col">Fecha</th>
+              <th style="width:23%" scope="col">Tipo</th>
+              <th scope="col">Archivo</th>
+            </tr>
+            </thead>
+            <tbody>
+            <% employee.files.sort_by{ |f| f.date_time }.each do |file| %>
+              <tr>
+                <td><%= file.date_time.to_s[0,10] %></td>
+                <td><%= file.type.type %></td>
+                <td>
+                  <% if user_matches_type(:employee_file_delete) %>
+                    <span class="float-right">
+                      <a class="confirm" href="/employee/file/delete/<%= file.id %>">
+                        <span class="badge badge-danger">eliminar</span>
+                      </a>
+                    </span>
+                  <% end %>
+                  <p><%= file.description %></p>
+                  <a href="/employee/file/<%= file.id %>"><%= File.basename(file.path) %></a>
+                </td>
+              </tr>
+            <% end %>
+            </tbody>
+          </table>
+        <% end %>
+        <% if user_matches_type(:employee_file_new) %>
+          <p><button id="upload-file" data-toggle="modal" data-target="#uploadModal" type="button" class="btn btn-success text-shadow btn-shadow border border-dark border-top-0 border-right-0">Subir nuevo archivo</button></p>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-8">
+    <div class="container mb-4">
+      <div class="row">
+        <div class="col-md-12">
+          <h4>Calendario y disponibilidad</h4>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-4">
+          <!-- Calendario -->
+          <div class="container">
+            <div class="row">
+              <% calendar_date = params[:starting_date].nil? ? Date.new(Date.today.year, Date.today.month, 1) : params[:starting_date] %>
+              <% calendar_date = Date.parse(calendar_date) unless calendar_date.is_a?(Date) %>
+              <%= employee_calendar(employee, calendar_date.year, calendar_date.month) %>
+            </div>
+            <div class="row px-3">
+              <span class="small">
+                <%= calendar_reference %>
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-8">
+          <% if employee.available_hours.nil? || employee.available_hours.count.zero? %>
+            <strong>No hay una disponibilidad cargada</strong><br>
+          <% else %>
+            <table class="table table-striped">
+              <thead>
+              <tr>
+                <th scope="col" class="py-2 px-2 small">Día</th>
+                <th scope="col" class="py-2 px-2 small">Detalle</th>
+              </tr>
+              </thead>
+              <tbody>
+              <% max_ah = 0 %>
+              <% days = %w[Lunes Martes Miércoles Jueves Viernes Sábado Domingo] %>
+              <% days.each do |day| %>
+                <tr>
+                  <th scope="row" class="px-2 py-1 small"><%= day[0..2] %></a></th>
+                  <td class="px-2 py-1">
+                    <% ah = employee.available_hours.find { |ah| date_symbol_to_name(ah[:day_of_week]) == day } %>
+                    <% (0..23).each do |i| %>
+                      <% if ah.nil? || ah["hour_#{i}".to_sym] <= 0.0  %>
+                        <span class="badge badge-secondary text-dark px-1"><%= i %></span>
+                      <% else %>
+                        <% max_ah += ah["hour_#{i}".to_sym] %>
+                        <span class="badge badge-success px-1"><%= i %></span>
+                      <% end %>
+                    <% end %>
+                  </td>
+                </tr>
+              <% end %>
+              </tbody>
+            </table>
+            <% if user_matches_type(:employee_availability) %>
+              <span class="float-right"><button id="modify-availability-hours" data-toggle="modal" data-target="#availabilityModal" type="button" class="btn btn-success text-shadow btn-shadow border border-dark border-top-0 border-right-0 my-0">Modificar</button></span>
+            <% end %>
+            <p class="mt-3 mb-1">Total de horas de disponibilidad: <strong><%= max_ah %></strong></p>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+      <% starting_date = calendar_date %>
+      <% ending_date = calendar_date + 32 %>
+      <% ending_date = Date.new(ending_date.year, ending_date.month, 1) - 1 %>
+      <%= erb :employee_shifts_detail, locals: { employee: employee, starting_date: starting_date, ending_date: ending_date } %>
+    </div>
+  </div>
+</div>
+
+<%= erb :'forms/avatar_upload', locals: locals %>
+<%= erb :'forms/file_upload', locals: locals %>
+<%= erb :'forms/document_selection', locals: locals %>
+<%= erb :'forms/license_file_upload', locals: locals %>
+
+<script>
+  $("h6[id^='toggle_']").click(function(event) {
+    event.preventDefault();
+    let target_name = $(this).attr('id').replace('toggle_', '');
+    $("div[id="+target_name+"]").collapse('toggle');
+  });
+  $('[data-toggle="tooltip"]').tooltip();
+</script>

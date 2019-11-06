@@ -1,0 +1,38 @@
+<!-- Employee quick filter -->
+<% if defined?(@employee_quick_filter_id)
+     @employee_quick_filter_id += 1
+   else
+     @employee_quick_filter_id = 1
+   end %>
+<input type="text" list="employee_quick_filter_list_<%= @employee_quick_filter_id %>" name="employee_quick_filter_<%= @employee_quick_filter_id %>" id="employee_quick_filter_input_<%= @employee_quick_filter_id %>" class="employee_quick_filter form-control" placeholder="Cargando empleados...">
+<datalist id="employee_quick_filter_list_<%= @employee_quick_filter_id %>"></datalist>
+
+<script type="text/javascript" charset="utf-8">
+  $.ajax({
+    dataType: "json",
+    url: '/employee/list',
+    cache: false,
+    success: function (data) {
+      $.each(data, function (key, employee) {
+        let option = $('<option/>');
+        option.attr({'value': employee.name + ' [' + employee.file_n + ']' }).attr({'data-employee-id': employee.id});
+        $('#employee_quick_filter_list_<%= @employee_quick_filter_id %>').append(option);
+      });
+      $('#employee_quick_filter_input_<%= @employee_quick_filter_id %>').attr('placeholder', 'Empleado ...');
+    }
+  });
+
+  function onEmployeeQuickFilter_<%= @employee_quick_filter_id %>(input_value, employee_id) {
+    <%= on_employee_quick_filter_js if defined?(on_employee_quick_filter_js) %>
+  }
+
+  $('#employee_quick_filter_input_<%= @employee_quick_filter_id %>').change(function() {
+    var input_value = $('#employee_quick_filter_input_<%= @employee_quick_filter_id %>').val();
+    $('#employee_quick_filter_list_<%= @employee_quick_filter_id %> option').filter(function() {
+      if($(this).val() === input_value) {
+        onEmployeeQuickFilter_<%= @employee_quick_filter_id %>(input_value, $(this).attr('data-employee-id'));
+        $('#employee_quick_filter_input_<%= @employee_quick_filter_id %>').val('');
+      }
+    });
+  });
+</script>

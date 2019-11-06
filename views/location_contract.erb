@@ -1,0 +1,22 @@
+<% if params[:invalid] == '1' %>
+  <div class="alert alert-danger" role="alert">Falló el ingreso</div><br>
+<% end %>
+
+<h3>Alertas de contrato:</h3>
+
+<form action='/location/contract/<%= params[:location_id] %>' method="post">
+  <% params['min_employees'] ||= location.min_employees %>
+  <%= em_input 'number', 'min_employees', 'Mínimo de empleados necesitados', '0', true %>
+
+  <% params['supervisor_needed'] ||= location.supervisor_needed ? 'on' : 'off'  %>
+  <%= em_checkbox 'supervisor_needed', 'Se necesita un supervisor', true %>
+  <br>
+
+  <% params['end_date'] ||= location.end_date == Date.new(2099,1,1) ? '' : location.end_date.to_s %>
+  <%= em_input 'date', 'end_date', 'Fecha de finalización de contrato', '2099-01-01', true %>
+  (dejar fecha de finalización vacía si no es necesaria)<br>
+
+  <input type="hidden" name="location_id" value="<%= params[:location_id] %>">
+  &nbsp;<br>
+  <input type='submit' value="Enviar" />
+</form>

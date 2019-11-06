@@ -1,0 +1,36 @@
+<h3>Documento: <%= document.name %></h3>
+<h5>Tipo: <%= document_types[document[:type].to_sym] %></h5>
+<% if user_matches_type(:document_new) %>
+  <a href="/document/edit/<%= document.id %>">Editar texto o tipo</a><br>
+<% end %>
+&nbsp;<br>
+
+<form action='/document/edit/<%= document.id %>' method="post">
+  <input name="content" id="document_content" type="hidden" value="<%= document[:content] %>">
+  <div class="container" id="document_selectors">
+    <%= em_document_selectors(em_document_markdown(document[:content]), document[:type].to_sym) %>
+  </div>
+  &nbsp;<br>
+
+  <% if user_matches_type(:document_new) %>
+    <input class="btn btn-success text-shadow btn-shadow border border-dark border-top-0 border-right-0" type="button" id="update_document" value="Guardar" />
+  <% else %>
+    No puedes modificar este documento
+  <% end %>
+</form>
+&nbsp;<br>
+
+<script type="text/javascript" charset="utf-8">
+  $('#update_document').click(function() {
+    values = [];
+    $('div#document_selectors').find('select').each(function(){
+      values.push($(this).val());
+    });
+
+    input_val = $('input#document_content').val();
+    input_val = input_val.replace(/XXXX.*?XXXX/g, () => 'XXXX'+values.shift()+'XXXX');
+    $('input#document_content').val(input_val);
+
+    $('form').submit();
+  });
+</script>

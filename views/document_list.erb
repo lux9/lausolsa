@@ -1,0 +1,39 @@
+<% if user_matches_type(:document_new) %>
+  <a href="/document/new" class="btn btn-success text-shadow btn-shadow border border-dark border-top-0 border-right-0 float-right">Nuevo</a>
+<% end %>
+<h3>Lista de documentos</h3><br>
+
+<% if documents.empty? %>
+  <strong>No hay documentos para mostrar</strong><br>
+<% else %>
+  <table class="table table-bordered table-striped">
+    <thead>
+    <tr>
+      <th scope="col">ID</th>
+      <th scope="col">Nombre</th>
+      <th scope="col">Tipo</th>
+      <th scope="col">Detalles</th>
+    </tr>
+    </thead>
+    <tbody>
+    <% documents.each do |document| %>
+      <tr>
+        <td><%= document.id %></td>
+        <th scope="row"><a href="/document/<%= document.id %>"><%= document.name %></a></th>
+        <td><%= document_types[document.type.to_sym] %></td>
+        <td>
+          <% if user_matches_type(:document_delete) %>
+            <a href="/document/delete/<%= document.id %>">Eliminar</a>
+          <% else %>
+            No puedes eliminarlo
+          <% end %>
+        </td>
+      </tr>
+    <% end %>
+    </tbody>
+  </table>
+
+  &nbsp;<br>
+  <% url_prefix = '/document/list/' %>
+  <%= em_pagination(url_prefix, documents.current_page, documents.page_count) %>
+<% end %>

@@ -1,0 +1,36 @@
+<% if params[:invalid] == '1' %>
+  <div class="alert alert-danger" role="alert">Falló el ingreso</div><br>
+<% end %>
+
+<% if request.path_info =~ /new/ %>
+  <h3>Nuevo Rol (set de permisos):</h3><br>
+  <% form_action = "/control_panel/roles/new" %>
+<% elsif defined? user_role %>
+  <h3>Editando Rol #<%= user_role.id %>:</h3><br>
+  <% form_action = "/control_panel/roles/edit/#{user_role.id}" %>
+<% end %>
+
+<form action='<%= form_action %>' method="post">
+  <div class="px-2">
+    <%= em_input 'text', 'name', 'Nombre del rol', '' %>
+  </div>
+
+  <div class="px-2 pb-2">
+    <input type="checkbox" id="check_all" name="check_all">
+    <label for="check_all"><strong>Activar / desactivar todos los campos</strong></label>
+  </div>
+
+  <div class="d-flex flex-wrap pt-2 pb-4">
+    <% available_privileges.each do |key, name| %>
+      <div style="min-width: 25em;" class="p-2"><%= em_checkbox key, name, true %></div>
+    <% end %>
+  </div>
+
+  <input type="submit" class="btn btn-success text-shadow btn-shadow border border-dark border-top-0 border-right-0" value="Enviar">
+</form>
+
+<script type="text/javascript" charset="utf-8">
+  $('#check_all').click(function(){
+    $("input:checkbox").prop('checked', $(this).prop('checked'));
+  });
+</script>

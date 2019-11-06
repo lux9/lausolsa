@@ -1,0 +1,52 @@
+<% if params[:invalid] == '1' %>
+  <div class="alert alert-danger" role="alert">Falló el ingreso</div><br>
+<% end %>
+
+<% if request.path_info =~ /new/ %>
+  <h3>Cliente nuevo</h3><br>
+<% elsif defined? client %>
+  <h3>Editando <%= client.name %></h3><br>
+<% end %>
+
+<form action='/client/<%= request.path_info %>' method="post">
+  <h4>Datos Fiscales:</h4><br>
+  <div class="container">
+    <div class="row">
+      <div class="col"><%= em_input 'text', 'name', 'Nombre / Razón Social', 'Company S.A.' %></div>
+    </div>
+    <div class="row">
+      <div class="col"><%= em_input 'text', 'cuit', 'CUIT', '00-00000000-0' %></div>
+      <div class="col"><%= em_select 'tax_condition', 'Condición de IVA', ['Responsable Inscripto', 'IVA Exento', 'Monotributista', 'Consumidor Final'] %></div>
+      <div class="col"><%= em_input 'text', 'iibb', 'Nro de Ingresos Brutos', '', true %></div>
+    </div>
+    <div class="row">
+      <div class="col"><%= em_checkbox "iva_perception", 'Percepción de IVA', true %></div>
+    </div>
+    <div class="row">
+      <div class="col"><%= em_checkbox "iibb_perception", 'Percepción de IIBB', true %></div>
+    </div>
+  </div>
+  &nbsp;<br>
+
+  <h4>Domicilio legal:</h4><br>
+  <div class="container">
+    <div class="row">
+      <div class="col-6"><%= em_input 'text', 'address_street', 'Calle', 'Av. Rivadavia' %></div>
+      <div class="col-2"><%= em_input 'number', 'address_number', 'Número', '1234' %></div>
+      <div class="col-4"><%= em_input 'text', 'address_extra', 'Extra', 'Torre, Piso, Dpto...', true %></div>
+    </div>
+    <div class="row">
+      <div class="col-10"><%= em_input 'text', 'address_street_between', 'Entre calles', '', true %></div>
+      <div class="col-2"><%= em_input 'number', 'address_cp', 'CP', '1234' %></div>
+    </div>
+    <div class="row">
+      <div class="col"><%= em_input 'text', 'address_city', 'Ciudad', 'Ciudad de Buenos Aires' %></div>
+      <div class="col"><%= em_provincias 'address_province', 'Provincia' %></div>
+      <div class="col"><%= em_countries 'address_country', 'País' %></div>
+    </div>
+  </div>
+  &nbsp;<br>
+
+  <input class="btn btn-success text-shadow btn-shadow border border-dark border-top-0 border-right-0" type='submit' value="Enviar" />
+</form>
+&nbsp;<br>

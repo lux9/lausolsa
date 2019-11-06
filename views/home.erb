@@ -1,0 +1,16 @@
+<div class="d-flex justify-content-center flex-wrap">
+
+  <% menu_elements.each do |menu_obj| %>
+    <div class="mx-3 my-2">
+      <div class="card text-center card-shadow" style="width: 12rem;">
+        <a href="<%= menu_obj[:link] %>" class="no-decoration">
+          <div class="card-header bg-success text-white text-shadow">
+            <strong><%= menu_obj[:title] %></strong>
+          </div>
+          <img src="<%= menu_obj[:icon] %>" alt="" class="m-3" style="max-width:128px">
+        </a>
+      </div>
+    </div>
+  <% end %>
+
+</div>

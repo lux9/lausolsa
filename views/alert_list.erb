@@ -1,0 +1,33 @@
+<div class="float-right" style="width: 25em;">
+  <div class="row">
+    <div class="col">
+      <% locals[:on_client_quick_filter_js] = "location.href = \"/alert/client/\" + client_id;" %>
+      <%= erb :'forms/client_quick_filter', locals: locals %>
+    </div>
+    <div class="col">
+      <% locals[:on_employee_quick_filter_js] = "location.href = \"/alert/employee/\" + employee_id;" %>
+      <%= erb :'forms/employee_quick_filter', locals: locals %>
+    </div>
+  </div>
+</div>
+
+<h3>Alertas Activas</h3>
+<a href="/alert/cleanup">Limpiar alertas sobre ausencias pasadas</a><br>
+&nbsp;<br>
+
+<table class="table table-bordered table-striped small">
+  <thead>
+    <tr>
+      <th scope="col">Disparada</th>
+      <th scope="col">Detalle</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% alerts.sort_by { |a| a[:trigger_date] }.reverse.each do |alert| %>
+    <tr>
+      <th><%= alert[:trigger_date].to_s[0, 16] %></th>
+      <td><i class="fas fa-exclamation-circle text-primary"></i> &nbsp; <%= alert[:message] %></td>
+    </tr>
+    <% end %>
+  </tbody>
+</table>

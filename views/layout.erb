@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="">
+  <meta name="author" content="">
+  <title>RubyCRM</title>
+
+  <!-- Bootstrap + Fonts -->
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.rawgit.com/h-ibaldo/Raleway_Fixed_Numerals/master/css/rawline.css" rel="stylesheet">
+
+  <!-- jQuery + Bootstrap Bundle -->
+  <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Datepicker -->
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+  <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css">
+
+  <!-- Bootstrap Select -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.10/css/bootstrap-select.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.10/js/bootstrap-select.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.10/js/i18n/defaults-es_ES.min.js"></script>
+
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css">
+
+  <style>
+      * { font-family: 'Rawline', 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif; font-weight: 300; }
+      h1, h1 *, h2, h2 *, h3, h3 *, .navbar-brand, .navbar-brand * { font-weight: 900; }
+      h4, h4 *, h5, h5 *, h6, h6 *, strong, strong * { font-weight: 600; }
+      .text-primary { color: darkred !important; }
+      .btn-primary { background-color: darkred !important; font-weight: 600; }
+      .bg-primary { background-color: darkred !important; color: #fff !important; }
+      .bg-secondary { background-color: #e0e0e0 !important; }
+      .badge-secondary { background-color: #e0e0e0 !important; }
+      .bg-light { background-color: #fafafa !important; }
+      .bg-dark { background-color: #454545 !important; }
+      .bg-page { background-color: #336699 !important; }
+      .bg-info { background-color: #31b9e9 !important; }
+      .table-condensed { font-size: 0.75em; }
+      .employee_selector { width: 100%; max-height: 165px; overflow: auto; }
+      .main-container { min-height: 500px; }
+      a.no-decoration { text-decoration: none; color: #000000; }
+      .text-shadow { text-shadow: 2px 2px 1px #333; }
+      .card-shadow { box-shadow: -2px 2px 7px 1px rgba(153,153,153,1); }
+      .card-shadow:hover { box-shadow: -2px 2px 5px 2px rgba(102,102,102,1); }
+      .page-shadow { box-shadow: -3px 3px 12px 2px rgba(51,51,51,1); }
+      .btn-shadow { box-shadow: -2px 2px 2px 0px rgba(153,153,153,0.75); }
+      .btn-shadow:hover { box-shadow: -2px 2px 2px 0px rgba(102,102,102,0.75); }
+      .btn-success:hover { background-color: #5db75a !important; }
+      .page-item.active .page-link { background-color: #e0e0e0; border-color: #aaaaaa; color: #333333; }
+      .nav-pills .nav-link { color: #000000 !important; }
+      .nav-pills .nav-link.active { background-color: #5db75a !important; color: #ffffff !important; }
+      .privileges-scroll { display: block; max-height: 10em; overflow-y: auto; }
+  </style>
+</head>
+<body class="bg-page">
+
+  <div class="container-full py-0 mx-0 my-0 bg-white">
+    <div class="row bg-white py-2 px-3">
+      <div class="col">
+        <a href="/">
+          <img src="/lausol-logo.png" alt="" style="max-height: 4em; border:0">
+        </a>
+      </div>
+      <div class="col text-right">
+        <strong><%= Date.today %></strong>
+        <% unless @user.nil? %>
+          <br><strong><%= "#{@user.first_name} #{@user.last_name}" %></strong>
+          <br><a href="/auth/logout">Cerrar sesión</a>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="row bg-success py-1">
+    </div>
+
+    <div class="row bg-light">
+      <div class="col-md-1 ml-1 py-2 px-1">
+        <%= erb :layout_menu, locals: locals %><br>
+      </div>
+
+      <div class="col py-4">
+        <% if ENV['RACK_ENV'] != 'production' %>
+          <div class="alert alert-warning" role="alert">El sitio está corriendo en modo de prueba (<%= ENV['RACK_ENV'] %>)</div>
+        <% end %>
+
+        <% if defined?(menu) && !menu.include?(:home) %>
+          <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+              <% crumb_current = breadcrumb.pop %>
+              <% breadcrumb.each do |crumb| %>
+                <li class="breadcrumb-item" aria-current="page"><a href="<%= crumb[:url] %>"><%= crumb[:name] %></a></li>
+              <% end %>
+              <li class="breadcrumb-item active" aria-current="page"><%= crumb_current[:name] %></li>
+            </ol>
+          </nav>
+        <% end %>
+
+        <div class="col py-3 main-container">
+          <%= yield %>
+
+          <% if defined?(employee) %>
+            <%= erb :'forms/employee_availability_modifier', locals: locals %>
+          <% end %>
+
+          <%= erb :'forms/quick_actions', locals: locals %>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+      (function() {
+          'use strict';
+          window.addEventListener('load', function() {
+              var forms = document.getElementsByClassName('needs-validation');
+              var validation = Array.prototype.filter.call(forms, function(form) {
+                  form.addEventListener('submit', function(event) {
+                      if (form.checkValidity() === false) {
+                          event.preventDefault();
+                          event.stopPropagation();
+                      }
+                      form.classList.add('was-validated');
+                  }, false);
+              });
+          }, false);
+      })();
+      $('a.confirm').click(function(event){
+          message = $(this).html();
+          if(!window.confirm('¿' + message + '?')) {
+              event.preventDefault();
+              event.stopPropagation();
+          }
+      });
+  </script>
+</body>
+</html>

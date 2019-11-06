@@ -1,0 +1,431 @@
+<!-- Turnos de trabajo -->
+<h4>Turnos de trabajo</h4>
+<% if params[:show_archived_shifts] == '1' %>
+  <a class="small" href="/employee/<%= employee[:id] %>">(ocultar turnos archivados)</a><br>
+  <% recent_shifts = employee.shifts.find_all { |s| s[:start_date] <= ending_date && s[:end_date] >= starting_date } %>
+<% else %>
+  <% if params[:show_archived_shifts].nil? || params[:show_archived_shifts] == '0' %>
+    <a class="small" href="/employee/<%= employee[:id] %>?show_archived_shifts=1&<%= build_query_string(['show_archived_shifts', 'id']) %>">(mostrar turnos archivados)</a><br>
+  <% else %>
+    <a class="small" href="/employee/<%= employee[:id] %>?<%= build_query_string(['show_archived_shifts', 'id']) %>">(ocultar turnos archivados)</a><br>
+  <% end %>
+  <% recent_shifts = employee.shifts.find_all { |s| !s[:archived] && s[:start_date] <= ending_date && s[:end_date] >= starting_date } %>
+<% end %>
+
+<% if recent_shifts.nil? || recent_shifts.count.zero? %>
+  <p><strong>No hay turnos activos</strong></p>
+<% else %>
+  <table class="table table-bordered table-striped">
+    <thead>
+    <tr>
+      <th scope="col">ID</th>
+      <th scope="col">Detalles</th>
+      <th scope="col">Acciones</th>
+    </tr>
+    </thead>
+    <tbody>
+    <% recent_shifts.each do |shift| %>
+      <tr>
+        <th scope="row"><a href="/location/<%= shift.location.id %>"><%= shift.id %></a></th>
+        <td>
+          <a href="/client/<%= shift.client.id %>"><%= shift.client.name %></a> - <a href="/location/<%= shift.location.id %>"><%= shift.location.full_name %></a> - <%= shift.type.type %><br>
+          <%= shift_readable_dates(shift) %>
+        </td>
+        <td>
+          <% if shift[:archived] || shift[:end_date] <= Date.today %>
+            Finalizó el <%= human_readable_date(shift[:end_date]) %>
+          <% else %>
+            <% if user_matches_type(:absence_new) %>
+              <a href="/absence/new/<%= employee.id %>">Cargar ausencia</a><br>
+            <% else %>
+              No puedes cargar ausencias<br>
+            <% end %>
+            <% if user_matches_type(:shift_unassign) %>
+              <a class="confirm" href="/shift/unassign/<%= shift.id%>?redir=/employee/<%= employee.id %>">Remover del turno</a>
+            <% else %>
+              No puedes remover empleados
+            <% end %>
+          <% end %>
+        </td>
+      </tr>
+    <% end %>
+    </tbody>
+  </table>
+<% end %>
+&nbsp;<br>
+
+<h4>Detalles de trabajos en el mes: </h4>
+<div id="accordion_shifts">
+  <!-- Ausencias -->
+  <% recent_absences = employee.employee_absences.find_all { |a| a[:absence_end_date].between?(starting_date, ending_date) }.sort_by{ |a| a[:absence_start_date] } %>
+  <% recent_shift_absences = employee.shift_absences.find_all { |a| a[:absence_date].between?(starting_date, ending_date) }.sort_by{ |a| a[:absence_date] } %>
+
+  <div class="card">
+    <div class="card-header" id="heading_absences">
+      <h6 id="toggle_employee_absences" class="mb-0">Ausencias recientes <span class="float-right badge badge-secondary"><%= recent_shift_absences.count %></span></h6>
+    </div>
+
+    <div id="employee_absences" class="collapse hide" aria-labelledby="heading_absences" data-parent="#accordion_shifts">
+      <div class="card-body">
+        <% if recent_absences.count.zero?  %>
+          <strong>Sin ausencias registradas en este período</strong><br>
+          &nbsp;<br>
+        <% else %>
+          <h6>Períodos de no-disponibilidad reportados</h6>
+          <table class="table table-bordered table-striped">
+            <thead>
+            <tr>
+              <th scope="col">Período</th>
+              <th scope="col">Acciones</th>
+            </tr>
+            </thead>
+            <tbody>
+            <% recent_absences.each do |absence| %>
+              <tr>
+                <td>
+                  <% if absence[:justified] %>
+                    <strong>Ausencia justificada</strong><br>
+                  <% end %>
+                  <% if absence[:absence_start_date] == absence[:absence_end_date] %>
+                    El día <%= human_readable_date(absence[:absence_start_date]) %><br>
+                  <% else %>
+                    Del <%= human_readable_date(absence[:absence_start_date]) %> al <%= human_readable_date(absence[:absence_end_date]) %> (inclusive)<br>
+                  <% end %>
+                  Fecha de aviso: <%= human_readable_date(absence[:notice_date]) %><br>
+                  Motivo de ausencia: <%= absence[:reason] %>
+                  <% absence.employee_absence_files.each do |absence_license| %>
+                    <br>&nbsp;<br>
+                    Médico: <%= absence_license[:doctor_name] %> (<%= absence_license[:doctor_license] %>)<br>
+                    Parte médico: <%= absence_license[:message] %><br>
+                    <% if absence_license[:license_start_date] != absence[:absence_start_date] ||
+                          absence_license[:license_end_date] != absence[:absence_end_date] %>
+                      Licencia válida desde <%= absence_license[:license_start_date] %> hasta <%= absence_license[:license_end_date] %><br>
+                    <% end %>
+                    Archivo asociado: <a href="/employee/file/<%= absence_license.employee_file.id %>"><%= File.basename(absence_license.employee_file.path) %></a>
+                  <% end %>
+                </td>
+                <td class="small">
+                  <% if user_matches_type(:absence_license_new) %>
+                    <a href="#" data-absence='{"id": "<%= absence[:id] %>", "start_date": "<%= absence[:absence_start_date] %>", "end_date": "<%= absence[:absence_end_date] %>"}' data-toggle="modal" data-target="#licenseModal" class="licence-upload-link">Cargar parte médico</a><br>
+                  <% else %>
+                    No puedes cargar partes médicos<br>
+                  <% end %>
+                  <% if user_matches_type(:absence_new) %>
+                    <a href="#" class="employee_absence_edit_link" data-id="<%= absence[:id] %>" data-start-date="<%= absence[:absence_start_date] %>" data-end-date="<%= absence[:absence_end_date] %>" data-reason="<%= absence[:reason] %>" data-toggle="modal" data-target="#employeeAbsenceUpdateModal">Modificar ausencia</a><br>
+                    <% chained_absence = recent_absences.find_all { |abs| abs[:absence_end_date] + 1 == absence[:absence_start_date] } %>
+                    <% unless chained_absence.empty? %>
+                      <a href="/absence/merge/<%= chained_absence.first[:id] %>/<%= absence[:id] %>?redir=<%= request.fullpath + '?' + build_query_string(:id) %>">Unir con ausencia del día anterior</a><br>
+                    <% end %>
+                  <% else %>
+                    No puedes modificarla <br>
+                  <% end %>
+                  <% if user_matches_type(:absence_cancel) %>
+                    <a class="confirm" href='/absence/cancel/<%= absence.id %>'>Cencelar período</a>
+                  <% else %>
+                    No puede cancelarse
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+            </tbody>
+          </table>
+          <% if user_matches_type(:absence_new) %>
+            <%= erb :'forms/employee_absence_edit', locals: locals %>
+            <a href="/absence/new/<%= employee.id %>?redir=/employee/<%= employee[:id] %>" class="my-2 btn btn-success text-shadow btn-shadow border border-dark border-top-0 border-right-0">Nueva ausencia</a>
+          <% end %>
+          <br>&nbsp;<br>
+        <% end %>
+
+        <% if recent_shift_absences.count.zero? && !recent_absences.count.zero?  %>
+          <strong>Sin ausencias a jornadas en este período</strong><br>
+        <% elsif !recent_shift_absences.count.zero? %>
+          <h6>Ausencias a turnos de trabajo:</h6>
+          <form method="get" action="/absence/assign">
+            <% absences_by_shift = recent_shift_absences.group_by { |a| a.shift } %>
+            <% absences_by_shift.each do |shift, absences| %>
+            <table class="table table-bordered table-striped">
+              <thead>
+              <tr>
+                <th scope="col" colspan="3" class="border-bottom-0 bg-secondary">
+                  <% if shift.nil? %>
+                    Turno eliminado
+                  <% else %>
+                    Turno #<%= shift.id %>: <a href="/client/<%= shift.client.id %>"><%= shift.client.name %></a> - <a href="/location/<%= shift.location.id %>"><%= shift.location.full_name %></a> - <%= shift.type.type %>
+                  <% end %>
+                </th>
+              </tr>
+              <tr>
+                <th scope="col">
+                  <% if user_matches_type(:absence_assign) %>
+                    <input type="checkbox" name="check_all_checkbox_absence">
+                  <% else %>
+                    &nbsp;
+                  <% end %>
+                </th>
+                <th scope="col">Detalles</th>
+                <th scope="col">Acciones</th>
+              </tr>
+              </thead>
+              <tbody>
+              <% absences.sort_by{ |a| a[:absence_date] }.each do |absence| %>
+                <tr>
+                  <th scope="row">
+                    <% if user_matches_type(:absence_assign) && absence.absence_date >= Date.today %>
+                      <input type='checkbox' id='checkbox_absence_<%= absence.id %>' name='absence_<%= absence.id %>'>
+                    <% else %>
+                      &nbsp;
+                    <% end %>
+                  </th>
+                  <td>
+                    <label for='checkbox_absence_<%= absence.id %>' class='form-check-label'>
+                      <%= human_readable_date(absence.absence_date, absence.shift.start_time, absence.shift.end_time) %><br>
+                      <%= absence.replacement_employee.nil? ? '<strong>Ningún suplente asignado</strong>' : "Suplente: <a href='/employee/#{absence.replacement_employee.id}'>#{absence.replacement_employee.full_name}</a>" %>
+                    </label>
+                  </td>
+                  <td>
+                    <% if absence.replacement_employee.nil? %>
+                      <% if user_matches_type(:absence_assign) %>
+                        <a href='/absence/assign?employee_id=<%= employee.id %>&absences[]=<%= absence.id %>'>Asignar suplente</a>
+                      <% else %>
+                        No se puede asignar
+                      <% end %>
+                    <% else %>
+                      <% if user_matches_type(:absence_unassign) %>
+                        <a class="confirm" href='/absence/assign?employee_id=<%= employee.id %>&absences[]=<%= absence.id %>&replacement=0&redir=/employee/<%= employee.id %>'>Remover suplente</a>
+                      <% else %>
+                        No se puede desasignar
+                      <% end %>
+                    <% end %>
+                  </td>
+                </tr>
+              <% end %>
+              </tbody>
+            </table>
+            <% end %>
+
+            <% if user_matches_type(:absence_assign) %>
+              <input type="hidden" name="employee_id" value="<%= employee.id %>">
+              <input type="hidden" name="redir" value="/employee/<%= employee.id %>">
+              <input type="submit" class="my-2 btn btn-success text-shadow btn-shadow border border-dark border-top-0" name="submit" value="Asignar un suplente a la selección">
+          <% end %>
+          </form>
+        <% end %>
+      </div>
+    </div>
+  </div>
+  <script>
+    $("input[name='check_all_checkbox_absence']").click(function(){
+        $("input:checkbox[id^='checkbox_absence_']").prop('checked', $(this).prop('checked'))
+    })
+  </script>
+
+  <!-- Suplencias -->
+  <% recent_shift_replacements = employee.shift_replacements.find_all { |a| a[:absence_date].between?(starting_date, ending_date) }.sort_by{ |a| a[:absence_date] } %>
+
+  <div class="card">
+    <div class="card-header" id="heading_replacements">
+      <h6 id="toggle_employee_replacements" class="mb-0">Suplencias recientes <span class="float-right badge badge-secondary"><%= recent_shift_replacements.count %></span></h6>
+    </div>
+
+    <div id="employee_replacements" class="collapse hide" aria-labelledby="heading_replacements" data-parent="#accordion_shifts">
+      <div class="card-body">
+        <% if recent_shift_replacements.count.zero? %>
+          <strong>Sin suplencias registradas en este período</strong><br>
+          &nbsp;<br>
+        <% else %>
+          <table class="table table-bordered table-striped">
+            <thead>
+            <tr>
+              <th scope="col">ID</th>
+              <th scope="col">Detalles</th>
+              <th scope="col">Acciones</th>
+            </tr>
+            </thead>
+            <tbody>
+            <% recent_shift_replacements.each do |replacement| %>
+              <tr>
+                <th scope="row"><a href="/location/<%= replacement.location.id %>"><%= replacement.id %></a></th>
+                <td>
+                  <%= human_readable_date(replacement.absence_date, replacement.shift.start_time, replacement.shift.end_time) %><br>
+                  <%= replacement.client.name %> - <%= replacement.location.full_name %> - <%= replacement.shift.type.type %><br>
+                  Reemplaza a <a href="/employee/<%= replacement.absence_id %>"><%= replacement.absent_employee.full_name %></a>
+                </td>
+                <td>
+                  <% if user_matches_type(:absence_unassign) %>
+                    <a class="confirm" href="/absence/unassign/<%= replacement.id %>?redir=/employee/<%= employee.id %>">Remover suplencia</a>
+                  <% else %>
+                    No puede removerse
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+            </tbody>
+          </table>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Horas adicionales ("extras") -->
+  <% recent_overtime = employee.overtime.find_all { |o| o[:date].between?(starting_date, ending_date) }.sort_by{ |o| o[:date] } %>
+  <% recent_overtime_total = seconds_to_time(recent_overtime.map { |o| o.hours }.inject(0, :+) * 3600).to_s[0..4] %>
+  <div class="card">
+    <div class="card-header" id="heading_overtime">
+      <h6 id="toggle_employee_overtime" class="mb-0">Horas adicionales <span class="float-right badge badge-secondary"><%= recent_overtime_total.to_i %></span></h6>
+    </div>
+
+    <div id="employee_overtime" class="collapse hide" aria-labelledby="heading_overtime" data-parent="#accordion_shifts">
+      <div class="card-body">
+        <% if recent_overtime.nil? || recent_overtime.count.zero? %>
+          <strong>Sin horas adicionales en este período</strong><br>
+        <% else %>
+          <table class="table table-bordered table-striped">
+            <thead>
+            <tr>
+              <th scope="col">Horas</th>
+              <th scope="col">Detalles</th>
+              <th scope="col">Acciones</th>
+            </tr>
+            </thead>
+            <tbody>
+            <% recent_overtime.each do |overtime| %>
+              <tr>
+                <td valign="top">
+                  <%= seconds_to_time(overtime.hours * 3600).to_s[0..4] %>
+                </td>
+                <td>
+                  <%= human_readable_date(overtime.date, overtime.start_time, overtime.end_time) %><br>
+                  Cliente: <%= overtime.client.name %> - <%= overtime.location.full_name %><br>
+                  Motivo: <%= overtime.reason %>
+                  <% if overtime[:double_pay] %>
+                    <br>Horario doble
+                  <% end %>
+                  <% if overtime[:night_time] %>
+                    <br>Horario nocturno
+                  <% end %>
+                </td>
+                <td valign="top">
+                  <% if user_matches_type(:overtime_new) %>
+                    <a class="confirm" href="/employee/overtime/delete/<%= overtime.id%>">Remover horas adicionales</a>
+                  <% else %>
+                    No puedes removerlas
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+            </tbody>
+          </table>
+          Total de horas adicionales: <strong><%= recent_overtime_total %></strong><br>
+        <% end %>
+        <% if user_matches_type(:overtime_new) %>
+          <p><a href="/employee/overtime/<%= employee.id %>" class="my-2 btn btn-success text-shadow btn-shadow border border-dark border-top-0 border-right-0">Cargar horas adicionales</a></p>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Llegadas tarde -->
+  <% recent_late_arrivals = employee.late_arrivals.find_all { |la| la[:date].between?(starting_date, ending_date) }.sort_by{ |la| la[:date] } %>
+  <div class="card">
+    <div class="card-header" id="heading_late_arrival">
+      <h6 id="toggle_employee_late_arrival" class="mb-0">Llegadas tarde <span class="float-right badge badge-secondary"><%= recent_late_arrivals.count %></span></h6>
+    </div>
+
+    <div id="employee_late_arrival" class="collapse hide" aria-labelledby="heading_late_arrival" data-parent="#accordion_shifts">
+      <div class="card-body">
+        <% if recent_late_arrivals.nil? || recent_late_arrivals.count.zero? %>
+          <strong>Sin llegadas tarde en este período</strong><br>
+        <% else %>
+          <table class="table table-bordered table-striped">
+            <thead>
+            <tr>
+              <th scope="col">Día</th>
+              <th scope="col">Detalles</th>
+              <th scope="col">Acciones</th>
+            </tr>
+            </thead>
+            <tbody>
+            <% recent_late_arrivals.each do |late_arrival| %>
+              <tr>
+                <td>
+                  <%= human_readable_date late_arrival[:date] %>
+                </td>
+                <td>
+                  Motivo: <%= late_arrival[:reason].nil? || late_arrival[:reason] == '' ? 'Ningún motivo cargado' : late_arrival[:reason] %><br>
+                  <% if late_arrival[:shift_id].nil? %>
+                    Turno previamente eliminado
+                  <% else %>
+                    Turno #<%= late_arrival.shift[:id] %> - <a href="/client/<%= late_arrival.shift.client[:id] %>"><%= late_arrival.shift.client[:name] %></a> - <a href="/location/<%= late_arrival.shift.location[:id] %>"><%= late_arrival.shift.location.full_name %></a>
+                  <% end %>
+                </td>
+                <td valign="top">
+                  <% if user_matches_type(:late_arrival_delete) %>
+                    <a class="confirm" href="/employee/late_arrival/delete/<%= late_arrival.id%>">Remover llegada tarde</a>
+                  <% else %>
+                    No puedes eliminarlo
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+            </tbody>
+          </table>
+        <% end %>
+        <% if user_matches_type(:late_arrival_new) %>
+          <p><a href="/employee/late_arrival/new/<%= employee.id %>" class="my-2 btn btn-success text-shadow btn-shadow border border-dark border-top-0 border-right-0">Cargar llegada tarde</a></p>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <!-- Refuerzos -->
+  <% recent_shift_backups = employee.shift_backups.find_all { |sb| sb[:date].between?(starting_date, ending_date) }.sort_by{ |sb| sb[:date] } %>
+  <% recent_shift_backups_total_hours = seconds_to_time(recent_shift_backups.map { |sb| time_difference(sb[:start_time], sb[:end_time]) }.inject(0, :+)).to_s[0..4] %>
+  <div class="card">
+    <div class="card-header" id="heading_shift_backups">
+      <h6 id="toggle_employee_shift_backups" class="mb-0">Refuerzos realizados <span class="float-right badge badge-secondary"><%= employee.shift_backups.count %></span></h6>
+    </div>
+
+    <div id="employee_shift_backups" class="collapse hide" aria-labelledby="heading_shift_backups" data-parent="#accordion_shifts">
+      <div class="card-body">
+        <% if recent_shift_backups.nil? || recent_shift_backups.count.zero? %>
+          <strong>Sin refuerzos realizados en este período</strong><br>
+        <% else %>
+          <table class="table table-bordered table-striped">
+            <thead>
+            <tr>
+              <th scope="col">#</th>
+              <th scope="col">Detalles</th>
+              <th scope="col">Acciones</th>
+            </tr>
+            </thead>
+            <tbody>
+            <% recent_shift_backups.each do |shift_backup| %>
+              <tr>
+                <td>
+                  <%= shift_backup[:request_id] %>
+                </td>
+                <td>
+                  <%= human_readable_date(shift_backup[:date], shift_backup[:start_time], shift_backup[:end_time]) %><br>
+                  Motivo: <%= shift_backup[:reason].nil? || shift_backup[:reason] == '' ? 'Ningún motivo cargado' : shift_backup[:reason] %><br>
+                  <% if shift_backup[:location_id].nil? %>
+                    Estación no especificada o eliminada
+                  <% else %>
+                    Estación <a href="/location/<%= shift_backup.location[:id] %>"><%= shift_backup.location.full_name %></a> - <a href="/client/<%= shift_backup.client[:id] %>"><%= shift_backup.client[:name] %></a>
+                  <% end %>
+                </td>
+                <td valign="top">
+                  <% if user_matches_type(:shift_backup_unassign) %>
+                    <a class="confirm" href="/shift_backup/unassign/<%= shift_backup[:id] %>?redir=/employee/<%= employee[:id] %>">Remover</a>
+                  <% else %>
+                    No puedes remover el empleado
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+            </tbody>
+          </table>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>

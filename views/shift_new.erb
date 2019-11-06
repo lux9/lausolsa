@@ -1,0 +1,59 @@
+<% if params[:invalid] == '1' %>
+  <div class="alert alert-danger" role="alert">Falló el ingreso</div><br>
+<% end %>
+
+<% if request.path_info =~ /new/ %>
+  <h3>Nuevo turno de trabajo:</h3><br>
+  <% form_action = "/shift/new/#{params[:location_id]}" %>
+<% elsif defined? shift %>
+  <h3>Editando turno #<%= shift.id %>:</h3><br>
+  <% form_action = "/shift/edit/#{shift.id}" %>
+<% end %>
+
+<form action='<%= form_action %>' method="post">
+  <input type="checkbox" name="check_all_days"> Días: <br>
+  <%= em_checkbox 'monday', 'Lunes', true %>
+  <%= em_checkbox 'tuesday', 'Martes', true %>
+  <%= em_checkbox 'wednesday', 'Miércoles', true %>
+  <%= em_checkbox 'thursday', 'Jueves', true %>
+  <%= em_checkbox 'friday', 'Viernes', true %>
+  <%= em_checkbox 'saturday', 'Sábado', true %>
+  <%= em_checkbox 'sunday', 'Domingo', true %>
+  &nbsp;<br>
+
+  <script>
+    $("input[name='check_all_days']").click(function(){
+      $("input:checkbox[id^='checkbox_monday']").prop('checked', $(this).prop('checked'));
+      $("input:checkbox[id^='checkbox_tuesday']").prop('checked', $(this).prop('checked'));
+      $("input:checkbox[id^='checkbox_wednesday']").prop('checked', $(this).prop('checked'));
+      $("input:checkbox[id^='checkbox_thursday']").prop('checked', $(this).prop('checked'));
+      $("input:checkbox[id^='checkbox_friday']").prop('checked', $(this).prop('checked'));
+      $("input:checkbox[id^='checkbox_saturday']").prop('checked', $(this).prop('checked'));
+      $("input:checkbox[id^='checkbox_sunday']").prop('checked', $(this).prop('checked'));
+    })
+  </script>
+
+  Feriados: <span class="text-primary">(R)</span><br>
+  <%= em_radio 'holidays', '0', 'No se trabaja' %>
+  <%= em_radio 'holidays', '1', 'Se trabaja en feriados' %>
+  &nbsp;<br>
+
+  <%= em_select 'type', 'Tipo de trabajo a realizar', job_types.map { |t| t.type } %>
+  &nbsp;<br>
+
+  <%= em_input 'date', 'start_date', 'Primer día del turno', Date.today.to_s %>
+  <%= em_input 'date', 'end_date', 'Último día del turno', Date.today.to_s, true %>
+  <em>(Si el turno no tiene último día, dejar vacío)</em><br>
+  &nbsp;<br>
+
+  <%= em_input 'time', 'start_time', 'Hora inicio de turno', '09:00' %>
+  <%= em_input 'time', 'end_time', 'Hora fin de turno', '18:00' %>
+  &nbsp;<br>
+
+  <% if request.path_info =~ /new/ %>
+    <%= em_select 'amount', 'Cantidad de turnos a generar', (1..20).to_a %>
+    &nbsp;<br>
+  <% end %>
+
+  <input type='submit' value="Enviar" />
+</form>

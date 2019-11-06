@@ -1,0 +1,38 @@
+<!-- Client quick filter -->
+<% if defined?(@client_quick_filter_id)
+     @client_quick_filter_id += 1
+   else
+     @client_quick_filter_id = 1
+   end %>
+<input type="text" list="client_quick_filter_list_<%= @client_quick_filter_id %>" name="client_quick_filter_<%= @client_quick_filter_id %>" id="client_quick_filter_input_<%= @client_quick_filter_id %>" class="client_quick_filter form-control" placeholder="Cargando clientes...">
+<datalist id="client_quick_filter_list_<%= @client_quick_filter_id %>"></datalist>
+
+<script type="text/javascript" charset="utf-8">
+  $.ajax({
+    dataType: "json",
+    url: '/client/list',
+    cache: false,
+    success: function (data) {
+      $.each(data, function (key, client) {
+        let option = $('<option/>');
+        option.attr({'value': client.name}).attr({'data-client-id': client.id});
+        $('#client_quick_filter_list_<%= @client_quick_filter_id %>').append(option);
+      });
+      $('#client_quick_filter_input_<%= @client_quick_filter_id %>').attr('placeholder', 'Cliente ...');
+    }
+  });
+
+  function onClientQuickFilter_<%= @client_quick_filter_id %>(input_value, client_id) {
+    <%= on_client_quick_filter_js if defined?(on_client_quick_filter_js) %>
+  }
+
+  $('#client_quick_filter_input_<%= @client_quick_filter_id %>').change(function() {
+    var input_value = $('#client_quick_filter_input_<%= @client_quick_filter_id %>').val();
+    $('#client_quick_filter_list_<%= @client_quick_filter_id %> option').filter(function() {
+      if($(this).val() === input_value) {
+        onClientQuickFilter_<%= @client_quick_filter_id %>(input_value, $(this).attr('data-client-id'));
+        $('#client_quick_filter_input_<%= @client_quick_filter_id %>').val('');
+      }
+    });
+  });
+</script>

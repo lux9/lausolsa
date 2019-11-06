@@ -1,0 +1,18 @@
+<% if params[:invalid] == '1' %>
+  <div class="alert alert-danger" role="alert">Falló el ingreso</div>
+<% end %>
+
+<h3>Llegada tarde de <%= employee.full_name %>:</h3>
+<form action='/employee/late_arrival/new/<%= params[:employee_id] %>' method="post">
+  <p>Puesto de trabajo:</p>
+  <% employee.shifts.each do |shift| %>
+    <%= em_radio 'shift_id', shift[:id].to_s, "#{shift.client[:name]} - #{shift.location.full_name} - #{shift.type[:type]}<br>#{shift_readable_dates(shift)}" %><br>
+  <% end %>
+
+  <% params[:date] = Date.today.to_s if params[:date].nil? %>
+  <%= em_input 'date', 'date', 'Fecha', Date.today.to_s %>
+  <%= em_input 'text', 'reason', 'Motivo de llegada tarde', '', true %>
+
+  &nbsp;<br>
+  <input type='submit' value="Enviar" />
+</form>

@@ -1,0 +1,83 @@
+<!-- Location filter form -->
+<div class="modal fade" id="locationFilterModal" tabindex="-1" role="dialog" aria-labelledby="locationFilterModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="locationFilterModalLabel">Filtrar estaciones de trabajo</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <form id="form_location_filter" class="needs-validation" novalidate action="<%= request_uri %>" method="get" enctype="multipart/form-data">
+        <div class="modal-body">
+          <div class="row">
+            <div class="col-1">
+              &nbsp;<br>
+              <%= em_checkbox 'filter_by_name', '', true %>
+            </div>
+            <div class="col-11">
+              <%= em_input 'text', 'name', 'Nombre', '', true %>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-1">
+              &nbsp;<br>
+              <%= em_checkbox 'filter_by_city', '', true %>
+            </div>
+            <div class="col-11">
+              <%= em_input 'text', 'address_city', 'Ciudad', 'Ciudad de Buenos Aires', true %>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-1">
+              &nbsp;<br>
+              <%= em_checkbox 'filter_by_province', '', true %>
+            </div>
+            <div class="col-11">
+              <%= em_provincias 'address_province', 'Provincia' %>
+            </div>
+          </div>
+          <!-- Comented for now
+          <div class="row">
+            <div class="col-1">
+              &nbsp;<br>
+              <%= em_checkbox 'filter_by_country', '', true %>
+            </div>
+            <div class="col-11">
+              <%= em_countries 'address_country', 'País' %>
+            </div>
+          </div>
+          -->
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-success text-shadow btn-shadow border border-dark border-top-0 border-right-0">Procesar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script type="text/javascript" charset="utf-8">
+  form_location_filter = $('#form_location_filter');
+
+  form_location_filter.find('#input_name').prop('disabled', !form_location_filter.find('#checkbox_filter_by_name').prop('checked'));
+  form_location_filter.find('#checkbox_filter_by_name').click(function(){
+    form_location_filter.find('#input_name').prop('disabled', !$(this).prop('checked'));
+  });
+
+  form_location_filter.find('#input_address_city').prop('disabled', !form_location_filter.find('#checkbox_filter_by_city').prop('checked'));
+  form_location_filter.find('#checkbox_filter_by_city').click(function(){
+    form_location_filter.find('#input_address_city').prop('disabled', !$(this).prop('checked'));
+  });
+
+  form_location_filter.find('#select_address_province').prop('disabled', !form_location_filter.find('#checkbox_filter_by_province').prop('checked'));
+  form_location_filter.find('#checkbox_filter_by_province').click(function(){
+    form_location_filter.find('#select_address_province').prop('disabled', !$(this).prop('checked'));
+  });
+
+  form_location_filter.find('#select_address_country').prop('disabled', !form_location_filter.find('#checkbox_filter_by_country').prop('checked'));
+  form_location_filter.find('#checkbox_filter_by_country').click(function(){
+    form_location_filter.find('#select_address_country').prop('disabled', !$(this).prop('checked'));
+  });
+</script>

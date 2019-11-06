@@ -1,0 +1,27 @@
+<h3>Importador de empleados</h3>
+&nbsp;<br>
+
+<% if employees.nil? || employees.empty? %>
+  <div class="alert alert-danger" role="alert">
+    No se detectaron empleados en el importado
+  </div>
+<% else %>
+  <% employees.each do |employee| %>
+    <% if employee.errors.nil? || employee.errors.empty? %>
+      <div class="alert alert-success" role="alert">
+        Empleado importado <a href="/employee/<%= employee.id %>"><%= employee.name %></a>
+      </div>
+    <% else %>
+      <div class="alert alert-danger" role="alert">
+        No pudo importarse el empleado <strong><%= employee.name %></strong><br>
+        <ul>
+          <%= employee.errors.each.map { |e|
+            error_name = e[0].is_a?(Array) ? employee_import_fields[e[0][0]].to_s : employee_import_fields[e[0]].to_s
+            error_text = e[1].join(',')
+            '<li>' + error_name + ' -> ' + error_text + '</li>'
+          }.join("\n") %>
+        </ul>
+      </div>
+    <% end %>
+  <% end %>
+<% end %>

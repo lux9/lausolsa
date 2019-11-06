@@ -1,0 +1,13 @@
+defaultEntryPoints = ["http"]
+
+[entrypoints]
+  [entryPoints.http]
+  address = ":80"
+
+[web]
+address = ":8080"
+
+[docker]
+domain="docker.localhost"
+watch=true
+endpoint="unix:///var/run/docker.sock"

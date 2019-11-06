@@ -1,0 +1,43 @@
+<h3>Importado por templates</h3>
+&nbsp;<br>
+
+<h5>Clientes</h5>
+<p>
+  <a href="/templates/client_template.xlsx">Plantilla para clientes</a><br>
+  <a href="/export/clients">Exportar clientes actuales</a>
+</p>
+
+<form action="/import/clients" method="post" enctype="multipart/form-data">
+  <%= em_file_input 'file', 'Archivo con clientes', '.xls,.xlsx,.csv' %>
+  <input type="submit" class="btn btn-success text-shadow btn-shadow border border-dark border-top-0 border-right-0" value="Cargar"><br>
+</form>
+&nbsp;<br>
+
+<h5>Empleados</h5>
+<p>
+  <a href="/templates/employee_template.xlsx">Plantilla para empleados</a><br>
+  <a href="/export/employees">Exportar empleados actuales</a>
+</p>
+
+<form action="/import/employees" method="post" enctype="multipart/form-data">
+  <%= em_file_input 'file', 'Archivo con empleados', '.xls,.xlsx,.csv' %>
+  <input type="submit" class="btn btn-success text-shadow btn-shadow border border-dark border-top-0 border-right-0" value="Cargar"><br>
+</form>
+&nbsp;<br>
+
+<h5>Estaciones de trabajo</h5>
+<p>
+  <a href="/templates/location_template.xlsx">Plantilla para estaciones de trabajo</a><br>
+  <a href="/export/locations">Exportar estaciones de trabajo actuales</a>
+</p>
+
+<form action="/import/locations" method="post" enctype="multipart/form-data">
+  <%= em_file_input 'file', 'Archivo con estaciones de trabajo', '.xls,.xlsx,.csv' %>
+  <input type="submit" class="btn btn-success text-shadow btn-shadow border border-dark border-top-0 border-right-0" value="Cargar"><br>
+</form>
+&nbsp;<br>
+
+<h5>Turnos de trabajo</h5>
+<p>
+  <a href="/export/shifts">Exportar turnos de trabajo actuales</a>
+</p>

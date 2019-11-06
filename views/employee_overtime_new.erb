@@ -1,0 +1,86 @@
+<% if params[:invalid] == '1' %>
+  <div class="alert alert-danger" role="alert">
+    Falló el ingreso
+  </div>
+<% end %>
+
+<h3>Carga de horas extras</h3>
+
+<form action="/employee/overtime/<%= employee.id %>" id="overtime_form" method="post">
+  <div class="modal-body">
+    <div class="container">
+      <div class="row">
+        <div class="col-4">
+          <%= em_input 'date', 'date', 'Fecha', Date.today.to_s %>
+        </div>
+        <div class="col-4">
+          <%= em_input 'time', 'start_time', 'Inicio', '18:00' %>
+        </div>
+        <div class="col-4">
+          <%= em_input 'time', 'end_time', 'Fin', '19:00' %>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-6">
+          <%= em_select 'client_id', 'Cliente', [] %>
+        </div>
+        <div class="col-6">
+          <%= em_select 'location_id', 'Estación de trabajo', [] %>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col">
+          <%= em_input 'text', 'reason', 'Motivo' %>
+          <%= em_checkbox 'double_pay', 'Horario doble', true %>
+          <%= em_checkbox 'night_time', 'Horario nocturno', true %>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+    <button type="submit" class="btn btn-success text-shadow btn-shadow border border-dark border-top-0 border-right-0">Enviar</button>
+  </div>
+</form>
+
+<script>
+  $overtime_form = $("form#overtime_form");
+  $overtime_client = $overtime_form.find("select[name='client_id']");
+  $overtime_location = $overtime_form.find("select[name='location_id']");
+  $overtime_location_default = $overtime_location.html();
+
+  $.ajax({
+    dataType: "json",
+    url: '/client/list',
+    cache: false,
+    success: function(data) {
+      $.each(data, function (key, client) {
+        let option = $('<option/>');
+        option.attr({'value': client.id}).text(client.name);
+        $overtime_client.append(option);
+      });
+    }
+  });
+
+  $overtime_client.change(function() {
+    let client = $(this).val();
+    $.ajax({
+      dataType: "json",
+      url: '/client/'+client,
+      cache: false,
+      success: function(data) {
+        $overtime_location.html($overtime_location_default);
+        $.each(data, function (key, element) {
+          if(key === 'locations')
+          {
+            element.forEach(function(location){
+              let option = $('<option/>');
+              option.attr({'value': location.id}).text(location.name);
+              $overtime_location.append(option);
+            });
+          }
+        });
+      }
+    });
+  });
+</script>

@@ -1,0 +1,39 @@
+<% if params[:invalid] == '1' %>
+  <div class="alert alert-danger" role="alert">
+    Falló el ingreso
+  </div>
+<% end %>
+
+<h3>Pedido de refuerzo para <%= client.name %></h3>
+
+<form action="/shift_backup/new/<%= location.id %>" id="shift_backup_form" method="post">
+  <div class="modal-body">
+    <div class="container">
+      <div class="row">
+        <div class="col-4">
+          <% params['date'] = Date.today.to_s if params['date'].nil? %>
+          <%= em_input 'date', 'date', 'Fecha', Date.today.to_s %>
+        </div>
+        <div class="col-4">
+          <% params['start_time'] = DateTime.now.to_s[11..13]+'00' if params['start_time'].nil? %>
+          <%= em_input 'time', 'start_time', 'Inicio', '18:00' %>
+        </div>
+        <div class="col-4">
+          <% params['end_time'] = (DateTime.now + 1.0/24).to_s[11..13]+'00' if params['end_time'].nil? %>
+          <%= em_input 'time', 'end_time', 'Fin', '19:00' %>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col">
+          <%= em_select 'type', 'Tipo de trabajo', job_types.map { |t| t[:type] } %>
+          <%= em_input 'text', 'reason', 'Motivo para el refuerzo' %>
+          <%= em_input 'text', 'request_id', 'Identificador de refuerzo' %>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+    <button type="submit" class="btn btn-success text-shadow btn-shadow border border-dark border-top-0 border-right-0">Enviar</button>
+  </div>
+</form>

@@ -1,0 +1,119 @@
+<!-- Employee filter form -->
+<div class="modal fade" id="employeeFilterModal" tabindex="-1" role="dialog" aria-labelledby="employeeFilterModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="employeeFilterModalLabel">Filtrar empleados</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <form id="form_employee_filter" class="needs-validation" novalidate action="<%= request_uri %>" method="get" enctype="multipart/form-data">
+        <% if request_uri =~ /^\/absence/ %>
+          <input type="hidden" name="employee_id" value="<%= params[:employee_id] %>">
+          <% absences.sort_by{ |a| a.absence_date }.each do |absence| %>
+            <input type="hidden" name="absences[]" value="<%= absence.id %>">
+          <% end %>
+        <% end %>
+        <div class="modal-body">
+          <div class="row">
+            <div class="col-1">
+              &nbsp;<br>
+              <%= em_checkbox 'filter_by_name', '', true %>
+            </div>
+            <div class="col-11">
+              <%= em_input 'text', 'name', 'Nombre / Apellido', '', true %>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-1">
+              &nbsp;<br>
+              <%= em_checkbox 'filter_by_gender', '', true %>
+            </div>
+            <div class="col-11">
+              <%= em_select 'gender', 'Género', %w(Masculino Femenino Otro) %>
+            </div>
+          </div>
+          <% if request_uri =~ /^\/employee/ %>
+            <div class="row">
+              <div class="col-1">
+                &nbsp;<br>
+                <%= em_checkbox 'filter_by_type', '', true %>
+              </div>
+              <div class="col-11">
+                <%= em_select 'type', 'Tipo de trabajo', job_types.map { |t| t.type } %>
+              </div>
+            </div>
+          <% end %>
+          <div class="row">
+            <div class="col-1">
+              &nbsp;<br>
+              <%= em_checkbox 'filter_by_city', '', true %>
+            </div>
+            <div class="col-11">
+              <%= em_input 'text', 'address_city', 'Ciudad', 'Ciudad de Buenos Aires', true %>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-1">
+              &nbsp;<br>
+              <%= em_checkbox 'filter_by_province', '', true %>
+            </div>
+            <div class="col-11">
+              <%= em_provincias 'address_province', 'Provincia' %>
+            </div>
+          </div>
+          <!-- Comented for now
+          <div class="row">
+            <div class="col-1">
+              &nbsp;<br>
+              <%= em_checkbox 'filter_by_country', '', true %>
+            </div>
+            <div class="col-11">
+              <%= em_countries 'address_country', 'País' %>
+            </div>
+          </div>
+          -->
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-success text-shadow btn-shadow border border-dark border-top-0 border-right-0">Procesar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script type="text/javascript" charset="utf-8">
+  form_employee_filter = $('#form_employee_filter');
+
+  form_employee_filter.find('#input_name').prop('disabled', !form_employee_filter.find('#checkbox_filter_by_name').prop('checked'));
+  form_employee_filter.find('#checkbox_filter_by_name').click(function(){
+    form_employee_filter.find('#input_name').prop('disabled', !$(this).prop('checked'));
+  });
+
+  form_employee_filter.find('#select_gender').prop('disabled', !form_employee_filter.find('#checkbox_filter_by_gender').prop('checked'));
+  form_employee_filter.find('#checkbox_filter_by_gender').click(function(){
+    form_employee_filter.find('#select_gender').prop('disabled', !$(this).prop('checked'));
+  });
+
+  form_employee_filter.find('#select_type').prop('disabled', !form_employee_filter.find('#checkbox_filter_by_type').prop('checked'));
+  form_employee_filter.find('#checkbox_filter_by_type').click(function(){
+    form_employee_filter.find('#select_type').prop('disabled', !$(this).prop('checked'));
+  });
+
+  form_employee_filter.find('#input_address_city').prop('disabled', !form_employee_filter.find('#checkbox_filter_by_city').prop('checked'));
+  form_employee_filter.find('#checkbox_filter_by_city').click(function(){
+    form_employee_filter.find('#input_address_city').prop('disabled', !$(this).prop('checked'));
+  });
+
+  form_employee_filter.find('#select_address_province').prop('disabled', !form_employee_filter.find('#checkbox_filter_by_province').prop('checked'));
+  form_employee_filter.find('#checkbox_filter_by_province').click(function(){
+    form_employee_filter.find('#select_address_province').prop('disabled', !$(this).prop('checked'));
+  });
+
+  form_employee_filter.find('#select_address_country').prop('disabled', !form_employee_filter.find('#checkbox_filter_by_country').prop('checked'));
+  form_employee_filter.find('#checkbox_filter_by_country').click(function(){
+    form_employee_filter.find('#select_address_country').prop('disabled', !$(this).prop('checked'));
+  });
+</script>

@@ -1,0 +1,18 @@
+<p>
+  <strong><%= employee.full_name %></strong> <a target="_blank" href="/employee/<%= employee.id %>">(abrir ficha)</a><br>
+  <%= employee.type.type %>
+</p>
+<p>
+  <%= employee.address_street %> <%= employee.address_number %><br>
+  <% unless employee.address_extra.nil? || employee.address_extra.empty? %>
+    <%= employee.address_extra %><br>
+  <% end %>
+  <%= employee.address_city %> - CP: <%= employee.address_cp %><br>
+  <%= employee.address_province %>, <%= employee.address_country %><br>
+  <% unless employee.comment.nil? || employee.comment.empty? %>
+    &nbsp;<br>
+    <%= employee.comment %><br>
+  <% end %>
+</p>
+
+<%= employee_shift_details(employee) %>

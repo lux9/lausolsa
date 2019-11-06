@@ -1,0 +1,215 @@
+<h3>Panel de control</h3>
+
+<% if params[:invalid] == '1' %>
+  <div class="alert alert-danger" role="alert">
+    Falló el ingreso
+  </div>
+<% end %>
+
+<div class="row">
+  <div class="col-md-12 px-4 py-4 mb-4">
+    <h5>Secciones especiales:</h5>
+    <a href="/holiday/list" class="mr-2 btn btn-success text-shadow btn-shadow border border-dark border-top-0 border-right-0">Feriados</a>
+    <a href="/action_log/recent" class="mr-2 btn btn-success text-shadow btn-shadow border border-dark border-top-0 border-right-0">Registro de cambios</a>
+    <a href="/import" class="mr-2 btn btn-success text-shadow btn-shadow border border-dark border-top-0 border-right-0">Importar datos</a>
+    <a href="/export/custom" class="mr-2 btn btn-success text-shadow btn-shadow border border-dark border-top-0 border-right-0">Exportar datos</a>
+    <a href="#" data-toggle="modal" data-target="#exportUpdatesModal" class="btn btn-success text-shadow btn-shadow border border-dark border-top-0 border-right-0">Exportar novedades</a>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-2">
+    <h5>Maestros</h5>
+    <div class="nav flex-column nav-pills" id="cp-tab" role="tablist" aria-orientation="vertical">
+      <a class="nav-link active" id="cp-job-type-tab" data-toggle="pill" href="#cp-job-type" role="tab" aria-controls="cp-job-type" aria-selected="true">Tipos de trabajo</a>
+      <a class="nav-link" id="cp-employee-file-type-tab" data-toggle="pill" href="#cp-employee-file-type" role="tab" aria-controls="cp-employee-file-type" aria-selected="false">Tipos de archivo</a>
+      <a class="nav-link" id="cp-users-tab" data-toggle="pill" href="#cp-users" role="tab" aria-controls="cp-users" aria-selected="false">Usuarios</a>
+      <a class="nav-link" id="cp-user-roles-tab" data-toggle="pill" href="#cp-user-roles" role="tab" aria-controls="cp-user-roles" aria-selected="false">Roles y Permisos</a>
+    </div>
+  </div>
+  <div class="col-md-9">
+    <div class="tab-content" id="cp-tabContent">
+      <!-- Job Types -->
+      <div class="tab-pane fade show active" id="cp-job-type" role="tabpanel" aria-labelledby="cp-job-type-tab">
+        <% if user_matches_type(:job_types_new) %>
+          <a href="#" data-toggle="modal" data-target="#jobTypeModal" class="btn btn-success text-shadow btn-shadow border border-dark border-top-0 border-right-0 float-right">Nuevo</a>
+        <% end %>
+        <h5>Tipos de trabajos</h5>
+        <table class="table table-bordered table-striped">
+          <thead>
+          <tr>
+            <th scope="col">ID</th>
+            <th scope="col">Nombre</th>
+            <th scope="col">Acciones</th>
+          </tr>
+          </thead>
+          <tbody>
+          <% job_types.each do |job_type| %>
+            <tr>
+              <td><%= job_type.id %></td>
+              <th scope="row"><%= job_type[:type] %></th>
+              <td>
+                <% if !user_matches_type(:job_types_delete) %>
+                  No puedes eliminar
+                <% elsif %w[Maestranza Supervisor].include?(job_type[:type]) %>
+                  No puede modificarse
+                <% elsif Shift.where(type_id: job_type[:id]).any? %>
+                  Se encuentra en uso
+                <% else %>
+                  <a class="confirm" href="/control_panel/delete_job_type/<%= job_type[:id] %>">Eliminar tipo de trabajo</a>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- File Types -->
+      <div class="tab-pane fade" id="cp-employee-file-type" role="tabpanel" aria-labelledby="cp-employee-file-type-tab">
+        <% if user_matches_type(:file_types_new) %>
+          <a href="#" data-toggle="modal" data-target="#fileTypeModal" class="btn btn-success text-shadow btn-shadow border border-dark border-top-0 border-right-0 float-right">Nuevo</a>
+        <% end %>
+        <h5>Tipos de archivos de empleados</h5>
+        <table class="table table-bordered table-striped">
+          <thead>
+          <tr>
+            <th scope="col">ID</th>
+            <th scope="col">Nombre</th>
+            <th scope="col">Acciones</th>
+          </tr>
+          </thead>
+          <tbody>
+          <% file_types.each do |file_type| %>
+            <tr>
+              <td><%= file_type.id %></td>
+              <th scope="row"><%= file_type[:type] %></th>
+              <td>
+                <% if !user_matches_type(:file_types_delete) %>
+                  No puedes eliminar
+                <% elsif ['Parte Médico'].include?(file_type[:type]) %>
+                  No puede modificarse
+                <% elsif EmployeeFile.where(file_type_id: file_type[:id]).any? %>
+                  Se encuentra en uso
+                <% else %>
+                  <a class="confirm" href="/control_panel/delete_file_type/<%= file_type[:id] %>">Eliminar categoría</a>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Users -->
+      <div class="tab-pane fade" id="cp-users" role="tabpanel" aria-labelledby="cp-users-tab">
+        <% if user_matches_type(:users_new) %>
+          <a href="#" data-toggle="modal" data-target="#newUserModal" class="btn btn-success text-shadow btn-shadow border border-dark border-top-0 border-right-0 float-right">Nuevo</a>
+        <% end %>
+        <h5>Usuarios y permisos de acceso</h5>
+        <table class="table table-bordered table-striped">
+          <thead>
+          <tr>
+            <th scope="col">ID</th>
+            <th scope="col">Nombre</th>
+            <th scope="col">Apellido</th>
+            <th scope="col">Email</th>
+            <th scope="col">Rol</th>
+            <th scope="col">Acciones</th>
+          </tr>
+          </thead>
+          <tbody>
+          <% users.sort_by { |u| "#{u[:first_name]} #{u[:last_name]}" }.each do |user| %>
+            <tr>
+              <td><%= user.id %></td>
+              <td scope="row"><%= user[:first_name] %></td>
+              <td scope="row"><%= user[:last_name] %></td>
+              <td scope="row"><%= user[:email] %></td>
+              <td scope="row">
+                <% if user_matches_type(:users_role) %>
+                  <select id="select_role_name_<% user[:id] %>" name="role_name_<%= user[:id] %>" class="selectpicker" data-user-id="<%= user[:id] %>" data-width="auto">
+                    <%= user_roles.map { |r| "<option value='#{r[:id]}' #{r[:id] == user.role[:id] ? 'selected' : ''}>#{r[:name]}</option>" } %>
+                  </select>
+                <% else %>
+                  <%= user.role[:name] %>
+                <% end %>
+              </td>
+              <td class="small">
+                <% if user_matches_type(:users_password) %>
+                  <a href="#" class="user_password_link" data-id="<%= user[:id] %>" data-toggle="modal" data-target="#userPasswordModal">Cambiar contraseña</a><br>
+                <% else %>
+                  No puedes cambiar contraseñas<br>
+                <% end %>
+                <% if !user_matches_type(:users_delete) %>
+                  No puedes eliminar
+                <% elsif user == @user %>
+                  No puedes eliminarte
+                <% else %>
+                  <a class="confirm" href="/control_panel/delete_user/<%= user[:id] %>">Eliminar usuario</a>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- User Roles -->
+      <div class="tab-pane fade" id="cp-user-roles" role="tabpanel" aria-labelledby="cp-user-roles-tab">
+        <% if user_matches_type(:roles_new) %>
+          <a href="/control_panel/roles/new" class="btn btn-success text-shadow btn-shadow border border-dark border-top-0 border-right-0 float-right">Nuevo</a>
+        <% end %>
+        <h5>Permisos de acceso por rol</h5>
+        <table class="table table-bordered table-striped">
+          <thead>
+          <tr>
+            <th scope="col">ID</th>
+            <th scope="col">Rol</th>
+            <th scope="col">Permisos</th>
+            <th scope="col">Acciones</th>
+          </tr>
+          </thead>
+          <tbody>
+          <% user_roles.sort_by { |ur| ur[:id] }.each do |role| %>
+            <tr>
+              <td><%= role[:id] %></td>
+              <td><%= role[:name] %></td>
+              <td>
+                <span class="small privileges-scroll"><%= em_role_privileges_to_list(role[:privileges]) %></span>
+              </td>
+              <td>
+                <% if user_matches_type(:roles_new) %>
+                  <a href="/control_panel/roles/edit/<%= role[:id] %>">Cambiar permisos</a><br>
+                <% else %>
+                  No puedes modificarlo<br>
+                <% end %>
+                <% if !user_matches_type(:roles_delete) %>
+                  No puedes eliminarlo
+                <% elsif User.where(role_id: role[:id]).any? %>
+                  En uso (no puede eliminarse)<br>
+                <% else %>
+                  <a class="confirm" href="/control_panel/delete_user_role/<%= role[:id] %>">Eliminar rol</a>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="text/javascript" charset="utf-8">
+  $('select[id^=select_role_name_]').change(function(){
+    user = $(this).attr('data-user-id');
+    role = $(this).val();
+    location.href = '/control_panel/update_user_role/' + user + '/' + role;
+  });
+</script>
+
+<%= erb :'forms/control_panel_new_file_type', locals: locals %>
+<%= erb :'forms/control_panel_new_job_type', locals: locals %>
+<%= erb :'forms/control_panel_new_user', locals: locals %>
+<%= erb :'forms/control_panel_user_password', locals: locals %>
+<%= erb :'forms/control_panel_export_updates', locals: locals %>

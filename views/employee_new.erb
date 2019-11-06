@@ -1,0 +1,85 @@
+<% if params[:invalid] == '1' %>
+  <div class="alert alert-danger" role="alert">
+    Falló el ingreso
+  </div>
+<% end %>
+
+<% if request.path_info =~ /new/ %>
+  <h3>Empleado nuevo</h3><br>
+<% elsif defined? employee %>
+  <h3>Editando <%= employee.name %></h3><br>
+<% end %>
+
+<form action='/employee/<%= request.path_info %>' method="post">
+  <h4>Datos personales:</h4><br>
+  <div class="container">
+    <div class="row">
+      <div class="col"><%= em_input 'text', 'first_name', 'Nombre', 'Juan' %></div>
+      <div class="col"><%= em_input 'text', 'last_name', 'Apellido', 'Perez' %></div>
+    </div>
+    <div class="row">
+      <div class="col"><%= em_input 'date', 'birthday', 'Nacimiento', Date.new(Date.today.year.to_i - 18, 1, 1).to_s %></div>
+      <div class="col"><%= em_input 'date', 'join_date', 'Fecha de Ingreso', Date.today.to_s %></div>
+    </div>
+    <div class="row">
+      <div class="col"><%= em_select 'gender', 'Género', %w(Masculino Femenino Otro) %></div>
+      <div class="col"><%= em_select 'marital_status', 'Estado Civil', %w(Soltero/a Casado/a Separado/a Divorciado/a Viudo/a Otro) %></div>
+    </div>
+    <div class="row">
+      <div class="col"><%= em_input 'text', 'phone_mobile', 'Teléfono celular', '(11) 2222-3333', true %></div>
+      <div class="col"><%= em_input 'text', 'phone_home', 'Teléfono fijo', '(11) 2222-3333',  true %></div>
+    </div>
+  </div>
+  &nbsp;<br>
+
+  <h4>Información laboral:</h4><br>
+  <div class="container">
+    <div class="row">
+      <div class="col"><%= em_input 'text', 'cuit', 'CUIT / CUIL', '00-00000000-0' %></div>
+      <div class="col"><%= em_input 'text', 'file_number', 'Nro de Legajo', '0', true %></div>
+    </div>
+    <div class="row">
+      <div class="col"><%= em_select 'type', 'Tipo de trabajo que puede hacer', job_types.map { |t| t.type } %></div>
+      <div class="col"><%= em_input 'number', 'max_weekly_hours', 'Horas disponibles por semana', '40' %></div>
+    </div>
+    <div class="row">
+      <div class="col"><%= em_input 'text', 'cbu', 'CBU Bancario', '', true %></div>
+    </div>
+    <div class="row">
+      <div class="col"><%= em_checkbox 'worker_union', '¿Afiliado al Sindicato?', true %></div>
+    </div>
+    <div class="row">
+      <div class="col"><%= em_checkbox 'works_holidays', '¿Trabaja en feriados?', true %></div>
+    </div>
+  </div>
+  &nbsp;<br>
+
+  <h4>Datos postales:</h4><br>
+  <div class="container">
+    <div class="row">
+      <div class="col-6"><%= em_input 'text', 'address_street', 'Calle', 'Av. Rivadavia' %></div>
+      <div class="col-2"><%= em_input 'number', 'address_number', 'Número', '1234' %></div>
+      <div class="col-4"><%= em_input 'text', 'address_extra', 'Extra', 'Torre, Piso, Dpto...', true %></div>
+    </div>
+    <div class="row">
+      <div class="col-10"><%= em_input 'text', 'address_street_between', 'Entre calles', '', true %></div>
+      <div class="col-2"><%= em_input 'number', 'address_cp', 'CP', '1234' %></div>
+    </div>
+    <div class="row">
+      <div class="col"><%= em_input 'text', 'address_city', 'Ciudad', 'Ciudad de Buenos Aires' %></div>
+      <div class="col"><%= em_provincias 'address_province', 'Provincia' %></div>
+      <div class="col"><%= em_countries 'address_country', 'País' %></div>
+    </div>
+  </div>
+  &nbsp;<br>
+
+  <h4>Comentarios (opcional):</h4><br>
+  <div class="container">
+    <div class="row">
+      <div class="col"><textarea name="comment" rows="5" style="width:100%"></textarea></div>
+    </div>
+  </div>
+  &nbsp;<br>
+
+  <input class="btn btn-success text-shadow btn-shadow border border-dark border-top-0 border-right-0" type='submit' value="Enviar" />
+</form>

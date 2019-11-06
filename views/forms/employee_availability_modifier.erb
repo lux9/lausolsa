@@ -1,0 +1,92 @@
+<!-- File availability form -->
+<div class="modal fade" id="availabilityModal" tabindex="-1" role="dialog" aria-labelledby="availabilityModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="availabilityModalLabel">Cambio de disponibilidad</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <form class="needs-validation" novalidate action="/employee/edit_availability/<%= employee.id %>" method="post" enctype="multipart/form-data">
+        <div class="modal-body">
+          <table class="table table-bordered table-striped table-responsive">
+            <thead>
+            <tr>
+              <th scope="col" class="px-2 small">Día</th>
+              <% (0..23).each do |i| %>
+                <th scope="col" class="px-2 small"><%= i %></th>
+              <% end %>
+            </tr>
+            </thead>
+            <tbody>
+              <% days = %i[monday tuesday wednesday thursday friday saturday sunday] %>
+              <% days.each do |day| %>
+                <tr>
+                  <th scope="row" class="px-2 small"><%= date_symbol_to_name(day) %></a></th>
+                  <% ah = employee.available_hours.find { |ah| ah[:day_of_week] == day.to_s } %>
+                  <% (0..23).each do |i| %>
+                    <td class="px-2 small">
+                      <% params["#{day}_#{i}".to_sym] = 'on' unless ah.nil? || ah["hour_#{i}".to_sym] <= 0.0 %>
+                      <%= em_checkbox "#{day}_#{i}", nil, true %>
+                    </td>
+                  <% end %>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+          <h5>Acciones rápidas</h5>
+          <div class="form-group" id="quickActionGroup">
+            <select name="action" class="selectpicker" data-width="auto">
+              <option value="1">Seleccionar</option>
+              <option value="0">Deseleccionar</option>
+            </select>
+            el día
+            <select name="day" class="selectpicker" data-width="auto" multiple>
+              <%= days.map { |d| "<option value='#{d}'>#{date_symbol_to_name(d)}</option>" }.join %>
+            </select>
+            desde
+            <select name="from_hour" class="selectpicker" data-width="auto">
+              <%= (0..23).map { |h| "<option>#{h}</option>" }.join %>
+            </select>
+            hasta
+            <select name="to_hour" class="selectpicker" data-width="auto">
+              <%= (0..23).map { |h| "<option>#{h}</option>" }.join %>
+            </select>
+            &nbsp;&nbsp;
+            <button id="executeQuickAction" type="button" class="btn btn-success text-shadow btn-shadow border border-dark border-top-0 border-right-0 btn-sm mb-1">aplicar</button>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-success text-shadow btn-shadow border border-dark border-top-0 border-right-0">Enviar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script type="text/javascript" charset="utf-8">
+  $('#executeQuickAction').click(function(e){
+    let action = parseInt($('#quickActionGroup').find('select[name="action"]').val());
+    let days = $('#quickActionGroup').find('select[name="day"]').val();
+    let from_hour = parseInt($('#quickActionGroup').find('select[name="from_hour"]').val());
+    let to_hour = parseInt($('#quickActionGroup').find('select[name="to_hour"]').val());
+
+    days.forEach(function(day){
+      let hour = 0;
+      if(to_hour < from_hour) {
+        // from_hour -> 23
+        for (hour = from_hour; hour <= 23; hour++)
+        { $("input[name='" + day + "_" + hour + "']").prop('checked', action === 1); }
+        // 0 -> to_hour
+        for (hour = 0; hour <= to_hour; hour++)
+        { $("input[name='" + day + "_" + hour + "']").prop('checked', action === 1); }
+      } else {
+        // from_hour -> to_hour
+        for (hour = from_hour; hour <= to_hour; hour++)
+        { $("input[name='" + day + "_" + hour + "']").prop('checked', action === 1); }
+      }
+    })
+  })
+</script>

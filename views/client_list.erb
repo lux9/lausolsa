@@ -1,0 +1,70 @@
+<button id="client-filter-button" data-toggle="modal" data-target="#clientFilterModal" type="button" class="btn btn-success text-shadow btn-shadow border border-dark border-top-0 border-right-0 float-right">Filtrar</button>
+
+<% locals[:on_client_quick_filter_js] = "location.href = \"/client/\" + client_id;" %>
+<div class="float-right px-2"><%= erb :'forms/client_quick_filter', locals: locals %></div>
+<% if user_matches_type(:client_new) %>
+  <a href="/client/new" class="mx-2 btn btn-success text-shadow btn-shadow border border-dark border-top-0 border-right-0 text-white float-right">Nuevo cliente</a>
+<% end %>
+
+<h3 class="pb-0 mb-0">Lista de clientes</h3>
+<% if params[:show_archived].nil? || params[:show_archived] == '0' %>
+  <a class="small" href="/client/list?show_archived=1&<%= build_query_string('show_archived') %>">(mostrar clientes archivados)</a><br>
+<% else %>
+  <a class="small" href="/client/list?<%= build_query_string('show_archived') %>">(ocultar clientes archivados)</a><br>
+<% end %>
+
+<div class="text-center mx-auto">
+  <nav style="display: inline-block" aria-label="pagination">
+    <ul class="pagination mx-5">
+      <li class='page-item <%= params[:starting_letter].nil? ? 'active' : '' %>'>
+        <a class='page-link small p-2' href='/client/list'>#</a>
+      </li>
+      <% ('A'..'Z').each do |letter| %>
+        <li class='page-item <%= params[:starting_letter] == letter ? 'active' : '' %>'>
+          <a class='page-link small p-2' href='/client/list?starting_letter=<%= letter %>'><%= letter %></a>
+        </li>
+      <% end %>
+    </ul>
+  </nav>
+</div>
+
+<% if clients.empty? %>
+  <p class="text-center"><strong>No hay clientes para mostrar</strong></p>
+<% else %>
+  <div class="d-flex justify-content-center flex-wrap">
+    <% clients.each do |client| %>
+      <div class="mx-3 my-2">
+        <div class="card text-center card-shadow" style="width: 20em;">
+          <a href="/client/<%= client.id %>" class="no-decoration">
+            <div class="card-header <%= client[:archived] ? 'bg-secondary' : 'bg-success' %>">
+              <strong>
+                <span class="d-inline-block text-truncate text-shadow text-white" style="max-width: 17.5em;">
+                  <%= client.name %>
+                </span>
+              </strong>
+            </div>
+            <div class="row no-gutters">
+              <div class="col-md-4">
+                <img src="<%= em_client_logo client.id %>" style="width:100%;">
+              </div>
+              <div class="col-md-8 pt-3">
+                <p>
+                  Estaciones de trabajo: <%= client.locations.count { |l| l[:archived] == client[:archived] } %><br>
+                  Turnos: <%= client.shifts.count { |s| s[:archived] == client[:archived] } %><br>
+                  Empleados asignados: <%= client.shifts.uniq { |s| s[:employee_id] }.reject { |s| s[:employee_id].nil? || s[:archived] == client[:archived] }.count %>
+                </p>
+              </div>
+            </div>
+          </a>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  &nbsp;<br>
+  <% url_prefix = '/client/list/' %>
+  <%= em_pagination(url_prefix, clients.current_page, clients.page_count) %>
+<% end %>
+
+<% locals[:request_uri] = '/client' + request.path_info %>
+<%= erb :'forms/client_filter', locals: locals %>

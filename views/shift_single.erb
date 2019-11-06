@@ -1,0 +1,108 @@
+<% unless shift[:employee_id].nil? %>
+  <div class="alert alert-danger" role="alert">Este puesto de trabajo ya está asignado a <%= shift.employee.name %></div>
+<% else %>
+  <form action="/shift/assign" method="post">
+    <input type="hidden" name="shift_id" value="<%= params[:shift_id] %>">
+    <input type="hidden" id="employee_id" name="employee_id" value="0">
+    <% if available_employees.nil? || available_employees.count.zero? %>
+      <a href="/location/<%= shift.location_id %>" class="float-right btn btn-secondary text-white">&lt;&lt; volver</a>
+    <% else %>
+      <input class="float-right btn btn-success text-shadow btn-shadow border border-dark border-top-0 border-right-0" type='submit' value="Asignar empleado" />
+    <% end %>
+    <h3>Asignación de empleado:</h3>
+    &nbsp;<br>
+
+    <table class="table table-bordered">
+      <thead class="thead-dark">
+      <tr>
+        <th scope="col">Empleado actual</th>
+        <th scope="col">Puestos a cubrir</th>
+        <th scope="col">Empleado nuevo</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr>
+        <td valign="top">
+          <img src="<%= em_user_avatar nil %>"><br>
+          <strong>Turno libre</strong>
+        </td>
+        <td valign="top">
+          <h3>Turno a cubrir:</h3>
+          <p>
+            Cliente: <%= shift.client.name %><br>
+            Estación de trabajo: <%= shift.location.full_name %><br>
+            Horario: <%= shift_readable_dates(shift) %><br>
+            <%= shift_holiday_label(shift) %>
+            Tipo de trabajo: <%= shift.type.type %>
+          </p>
+        </td>
+        <td valign="top">
+          <img id="replacement_avatar" data-toggle="tooltip" data-placement="top" title="Selecciona un empleado debajo" src="<%= em_user_avatar nil %>"><br>
+          <span id="replacement_name"><strong>Empleado pendiente</strong></span>
+          <input type="hidden" id="replacement" name="replacement" value="0">
+        </td>
+      </tr>
+      </tbody>
+    </table>
+
+    <table class="table table-bordered">
+      <thead class="thead-dark">
+      <tr>
+        <th scope="col">
+          <button id="employee-filter-button" data-toggle="modal" data-target="#employeeFilterModal" type="button" class="btn btn-success text-shadow btn-shadow border border-dark border-top-0 border-right-0 float-right">Filtrar</button>
+          Empleados que pueden cubrir este puesto
+        </th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr>
+        <td valign="top">
+          <% if available_employees.nil? || available_employees.count.zero? %>
+            <div class="alert alert-danger" role="alert">No hay empleados que cumplan todas las condiciones</div>
+          <% else %>
+            <div class="employee_selector">
+              <ul class="nav nav-pills">
+                <% available_employees.each do |employee| %>
+                  <li class="nav-item">
+                    <a style="max-width: 130px" class="nav-link" data-toggle="tab" href="#employee_<%= employee.id %>">
+                      <img style="max-width: 100px" src="<%= em_user_avatar employee.id %>" alt=""><br>
+                      <%= employee.full_name %>
+                    </a>
+                  </li>
+                <% end %>
+              </ul>
+            </div>
+          <% end %>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <div class="tab-content p-3">
+            <span id="replacement_default">
+              Selecciona un empleado para ver detalles sobre sus puestos de trabajo
+            </span>
+            <% available_employees.each do |employee| %>
+              <div id="employee_<%= employee.id %>" class="tab-pane fade-in">
+                <h3>Detalles del empleado: </h3>
+                <%= erb :employee_single_minimal, locals: { employee: employee } %>
+              </div>
+            <% end %>
+          </div>
+        </td>
+      </tr>
+      </tbody>
+    </table>
+  </form>
+
+  <script>
+    $('a.nav-link').click(function(){
+      $('#replacement_default').hide();
+      $('input#employee_id').val($(this).attr('href').replace('#employee_',''))
+      $('#replacement_avatar').attr('src', $(this).find('img').attr('src'));
+      $('#replacement_name').text($(this).text());
+    })
+  </script>
+<% end %>
+
+<% locals[:request_uri] = '/shift' + request.path_info %>
+<%= erb :'forms/employee_filter', locals: locals %>

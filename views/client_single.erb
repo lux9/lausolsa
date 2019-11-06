@@ -1,0 +1,114 @@
+<div class="row">
+  <div class="col-md-4">
+    <h3>Cliente: <%= client.name %></h3>
+    <% if client[:archived] && user_matches_type(:client_unarchive) %>
+      <a class="confirm" href="/client/unarchive/<%= client.id %>">re-activar este cliente</a><br>
+    <% elsif !client[:archived] && user_matches_type(:client_archive) %>
+      <a class="confirm" href="/client/archive/<%= client.id %>">dar de baja este cliente</a><br>
+    <% end %>
+    &nbsp;<br>
+
+    <% if user_matches_type(:client_new) %>
+      <a class="float-right btn btn-success text-shadow btn-shadow border border-dark border-top-0 border-right-0" href="/client/edit/<%= client.id %>">Modificar</a>
+    <% end %>
+    <h4>Datos Fiscales</h4><br>
+    <% if user_matches_type(:client_logo) %>
+      <a href="#" class="mb-4 float-right" id="change-client-logo" data-toggle="modal" data-target="#clientLogoModal">
+        <img src="<%= em_client_logo client.id %>"><br>
+        <span class="small float-right text-dark">click para cambiar &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+      </a>
+    <% else %>
+      <img class="mb-4 float-right" src="<%= em_client_logo client.id %>">
+    <% end %>
+    CUIT: <%= client.cuit %><br>
+    Condición Impositiva: <%= client.tax_condition %><br>
+    Ingresos Brutos: <%= client.iibb%><br>
+    <% if client.iva_perception %>
+      Percepción de IVA<br>
+    <% end %>
+    <% if client.iibb_perception %>
+      Percepción de IIBB<br>
+    <% end %>
+    &nbsp;<br>
+
+    <h6>Domicilio:</h6>
+    <%= client.address_street %> <%= client.address_number %><br>
+    <% unless client.address_extra.nil? || client.address_extra.empty? %>
+      <%= client.address_extra %><br>
+    <% end %>
+    <%= client.address_city %> - CP: <%= client.address_cp %><br>
+    <%= client.address_province %>, <%= client.address_country %><br>
+    &nbsp;<br>
+
+    <% if employees.empty? %>
+      <strong>No hay empleados que trabajen con este cliente</strong><br>
+    <% else %>
+      <h6>Trabajan con el cliente los siguientes empleados:</h6>
+      <%= employees.map{ |e| "- <a href='/employee/#{e.id}'>#{e.full_name}</a>" }.join('<br>') %><br>
+    <% end %>
+    &nbsp;<br>
+  </div>
+  <div class="col-md-8">
+    <button id="location-filter-button" data-toggle="modal" data-target="#locationFilterModal" type="button" class="mx-2 btn btn-success text-shadow btn-shadow border border-dark border-top-0 border-right-0 float-right">Filtrar</button>
+    <% if user_matches_type(:location_new) %>
+      <a href="/location/new/<%= client.id %>" class="mx-2 btn btn-success text-shadow btn-shadow border border-dark border-top-0 border-right-0 text-white float-right">Nueva estación</a>
+    <% end %>
+    <h4 class="pb-0 mb-0">Lista de estaciones de trabajo</h4>
+    <% if params[:show_archived].nil? || params[:show_archived] == '0' %>
+      <a class="small" href="/client/<%= client[:id] %>?show_archived=1&<%= build_query_string('show_archived') %>">(mostrar estaciones archivadas)</a><br>
+    <% else %>
+      <a class="small" href="/client/<%= client[:id] %>?<%= build_query_string('show_archived') %>">(ocultar estaciones archivadas)</a><br>
+    <% end %>
+    &nbsp;<br>
+
+    <% if locations.empty? %>
+      <p class="text-center"><strong>No hay estaciones de trabajo cargadas</strong></p>
+    <% else %>
+      <div class="d-flex justify-content-center flex-wrap">
+        <% locations.each do |location| %>
+          <div class="mx-3 my-2">
+            <div class="card text-center card-shadow" style="width: 18em;">
+              <a href="/location/<%= location[:id]%>" class="no-decoration">
+                <div class="card-header <%= location[:archived] ? 'bg-secondary' : 'bg-success' %>">
+                  <strong>
+                    <span class="d-inline-block text-truncate text-shadow text-white" style="max-width: 16em;">
+                      <%= location.name %>
+                    </span>
+                  </strong>
+                </div>
+                <div class="row no-gutters">
+                  <div class="col-md-3 py-3">
+                    <img src="/icons/client.png" style="max-width:64px;">
+                  </div>
+                  <div class="col-md-9 pt-3">
+                    <p>
+                      <% if location.children.count.zero? %>
+                        Sin sub-estaciones<br>
+                      <% else %>
+                        <%= location.children.count  %> sub-estaciones<br>
+                      <% end %>
+
+                      <% if location.shifts.nil? || location.shifts.count.zero? %>
+                        Sin turnos cargados<br>
+                      <% else %>
+                        <%= location.shifts.count %> turnos cargados<br>
+                      <% end %>
+                    </p>
+                  </div>
+                </div>
+              </a>
+            </div>
+          </div>
+        <% end %>
+      </div>
+
+      &nbsp;<br>
+      <% url_prefix = "/client/#{client[:id]}/" %>
+      <%= em_pagination(url_prefix, locations.current_page, locations.page_count) %>
+    <% end %>
+  </div>
+</div>
+
+<% locals[:request_uri] = '/client' + request.path_info %>
+<%= erb :'forms/location_filter', locals: locals %>
+<%= erb :'forms/client_logo_upload', locals: locals %>

@@ -1,0 +1,126 @@
+<% if params[:invalid] == '1' %>
+  <div class="alert alert-danger" role="alert">Falló el ingreso</div>
+<% end %>
+
+<form action='/absence/assign' method="post">
+<% if available_employees.nil? || available_employees.count.zero? %>
+  <a href="/employee/<%= absences.first.absent_employee.id %>" class="float-right btn btn-secondary text-white">&lt;&lt; volver</a>
+<% else %>
+  <input class="float-right btn btn-success text-shadow btn-shadow border border-dark border-top-0 border-right-0" type='submit' value="Asignar suplencia" />
+<% end %>
+<h3>Nueva suplencia:</h3>
+
+  &nbsp;<br>
+
+  <table class="table table-bordered">
+    <thead class="thead-dark">
+      <tr>
+        <th scope="col">Empleado actual</th>
+        <th scope="col">Puestos a cubrir</th>
+        <th scope="col">Empleado nuevo</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td valign="top">
+          <img data-toggle="tooltip" data-placement="top" title="<%= absences.first.absent_employee.name %>" src="<%= em_user_avatar absences.first.absent_employee.id %>"><br>
+          <%= absences.first.absent_employee.name %>
+        </td>
+        <td valign="top">
+          <% absences_by_shift = absences.sort_by{ |a| a.absence_date }.group_by { |a| a.shift } %>
+          <% absences_by_shift.each do |shift, shift_absences| %>
+            <table class="table table-bordered table-striped">
+              <thead>
+                <tr>
+                  <th scope="col" colspan="3" class="border-bottom-0 bg-secondary">
+                    Turno #<%= shift.id %>: <a href="/client/<%= shift.client.id %>"><%= shift.client.name %></a> - <a href="/location/<%= shift.location.id %>"><%= shift.location.full_name %></a> - <%= shift.type.type %>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    <ul>
+                      <% shift_absences.sort_by{ |a| a.absence_date }.each do |absence| %>
+                      <li>
+                        <%= human_readable_date(absence.absence_date, absence.shift.start_time, absence.shift.end_time) %>
+                        <input type="hidden" name="absences[]" value="<%= absence.id %>">
+                      </li>
+                      <% end %>
+                    </ul>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          <% end %>
+        </td>
+        <td valign="top">
+          <img id="replacement_avatar" data-toggle="tooltip" data-placement="top" title="Selecciona un empleado debajo" src="<%= em_user_avatar nil %>"><br>
+          <span id="replacement_name"><strong>Suplente pendiente</strong></span>
+          <input type="hidden" id="replacement" name="replacement" value="0">
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <table class="table table-bordered">
+    <thead class="thead-dark">
+    <tr>
+      <th scope="col">
+        <button id="employee-filter-button" data-toggle="modal" data-target="#employeeFilterModal" type="button" class="btn btn-success text-shadow btn-shadow border border-dark border-top-0 border-right-0 float-right">Filtrar</button>
+        Suplentes que pueden cubrir este puesto
+      </th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+      <td valign="top">
+        <% if available_employees.nil? || available_employees.count.zero? %>
+          <div class="alert alert-danger" role="alert">No hay empleados que cumplan todas las condiciones, la ausencia quedará sin cubrir</div>
+        <% else %>
+          <div class="employee_selector">
+            <ul class="nav nav-pills">
+              <% available_employees.each do |employee| %>
+                <li class="nav-item">
+                  <a style="max-width: 130px" class="nav-link" data-toggle="tab" href="#employee_<%= employee.id %>">
+                    <img style="max-width: 100px" src="<%= em_user_avatar employee.id %>" alt=""><br>
+                    <%= employee.full_name %>
+                  </a>
+                </li>
+              <% end %>
+            </ul>
+          </div>
+        <% end %>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <div class="tab-content p-3">
+          <span id="replacement_default">
+            Selecciona un empleado para ver detalles sobre sus puestos de trabajo
+          </span>
+          <% available_employees.each do |employee| %>
+            <div id="employee_<%= employee.id %>" class="tab-pane fade-in">
+              <h3>Detalles del empleado: </h3>
+              <%= erb :employee_single_minimal, locals: { employee: employee } %>
+            </div>
+          <% end %>
+        </div>
+        <input type="hidden" name="employee_id" value="<%= params[:employee_id] %>">
+      </td>
+    </tr>
+    </tbody>
+  </table>
+</form>
+
+<script>
+  $('a.nav-link').click(function(){
+    $('#replacement_default').hide();
+    $('input#replacement').val($(this).attr('href').replace('#employee_',''));
+    $('#replacement_avatar').attr('src', $(this).find('img').attr('src'));
+    $('#replacement_name').text($(this).text());
+  })
+</script>
+
+<% locals[:request_uri] = '/absence' + request.path_info %>
+<%= erb :'forms/employee_filter', locals: locals %>

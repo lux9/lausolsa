@@ -1,0 +1,233 @@
+<div class="row">
+  <div class="col-md-4">
+    <h3><%= location.name %></h3>
+    <% if location[:archived] && user_matches_type(:location_unarchive) %>
+      <a class="confirm" href="/location/unarchive/<%= location[:id] %>">re-activar esta estación</a><br>
+    <% elsif !location[:archived] && user_matches_type(:location_archive) %>
+      <a class="confirm" href="/location/archive/<%= location[:id] %>">dar de baja esta estación</a><br>
+    <% end %>
+    <% if user_matches_type(:location_archive) && location.children.count.zero? && (location.shifts.nil? || location.shifts.count.zero?) %>
+      <a class="confirm" href="/location/delete/<%= location.id %>">eliminar esta estación de trabajo</a><br>
+    <% end %>
+    &nbsp;<br>
+
+    <% if user_matches_type(:location_new) %>
+      <a class="float-right btn btn-success text-shadow btn-shadow border border-dark border-top-0 border-right-0" href="/location/edit/<%= location.id %>">Modificar</a>
+    <% end %>
+    <h4>Detalles</h4>
+    <p>
+      Cliente: <%= location.client.name %><br>
+      <% unless location.parent_id.nil? %>
+        Estación padre: <%= location.parent.name %><br>
+      <% end %>
+      Dirección: <%= location.address_street %> <%= location.address_number %><br>
+      <% unless location.address_extra.nil? || location.address_extra.empty? %>
+        <%= location.address_extra %><br>
+      <% end %>
+      <%= location.address_city %> - CP: <%= location.address_cp %><br>
+      <%= location.address_province %>, <%= location.address_country %><br>
+    </p>
+
+    <% if user_matches_type(:location_new) %>
+      <a class="float-right btn btn-success text-shadow btn-shadow border border-dark border-top-0 border-right-0" href="/location/new/<%= location.client.id %>/<%= location.id %>">Nueva</a>
+    <% end %>
+    <h4>Sub-estaciones</h4>
+    <% if params[:show_archived_locations].nil? || params[:show_archived_locations] == '0' %>
+      <a class="small" href="/location/<%= location[:id] %>?show_archived_locations=1&<%= build_query_string(['show_archived_locations', 'id']) %>">(mostrar estaciones archivadas)</a><br>
+      <% child_locations = location.children.find_all { |l| !l[:archived] } %>
+    <% else %>
+      <% child_locations = location.children %>
+      <a class="small" href="/location/<%= location[:id] %>?<%= build_query_string(['show_archived_locations', 'id']) %>">(ocultar estaciones archivadas)</a><br>
+    <% end %>
+
+    <% if child_locations.count.zero? %>
+      <strong>No hay sub estaciones de trabajo cargadas</strong><br>
+    <% else %>
+      <ul>
+        <% child_locations.each do |child_location| %>
+          <li>
+            <a href="/location/<%= child_location.id%>"><%= child_location.name %></a>
+            <% if child_location.children.count > 0 %>
+              (contiene <%= child_location.children.count %> sub-estaciones)
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
+    &nbsp;<br>
+
+    <% if user_matches_type(:location_contract_edit) %>
+      <a class="float-right btn btn-success text-shadow btn-shadow border border-dark border-top-0 border-right-0" href="/location/contract/<%= location.id %>">Modificar</a>
+    <% end %>
+    <h4>Datos de contrato</h4>
+    <p>
+      Mínimo de empleados asignados: <%= location.min_employees %>
+      <%= location.min_employees <= 0 || location.shifts.find_all { |s| !s.employee_id.nil? }.map { |s| s.employee_id }.uniq.count >= location.min_employees ? '(ok)' : '<strong>(no se cumple)</strong>' %><br>
+
+      Se necesita supervisor: <%= location.supervisor_needed ? 'Sí' : 'No' %>
+      <%= !location.supervisor_needed || location.shifts.any? { |s| !s.employee_id.nil? && s.type.type == 'Supervisor' } ? '(ok)' : '<strong>(no se cumple)</strong>' %><br>
+
+      Finalización de contrato: <%= location.end_date.to_s == '2099-01-01' ? 'Sin fecha límite' : location.end_date.to_s %>
+    </p>
+    &nbsp;<br>
+  </div>
+  <div class="col-md-8">
+
+    <!-- Shifts -->
+    <% if user_matches_type(:shift_new) %>
+      <a class="float-right btn btn-success text-shadow btn-shadow border border-dark border-top-0 border-right-0" href="/shift/new/<%= location.id %>">Nuevo</a>
+    <% end %>
+    <h4>Turnos de trabajo</h4>
+    <% if params[:show_archived_shifts].nil? || params[:show_archived_shifts] == '0' %>
+      <a class="small" href="/location/<%= location[:id] %>?show_archived_shifts=1&<%= build_query_string(['show_archived_shifts', 'id']) %>">(mostrar turnos archivados)</a><br>
+      <% active_shifts = location.shifts.find_all { |s| !s[:archived] } %>
+    <% else %>
+      <% active_shifts = location.shifts %>
+      <a class="small" href="/location/<%= location[:id] %>?<%= build_query_string(['show_archived_shifts', 'id']) %>">(ocultar turnos archivados)</a><br>
+    <% end %>
+
+    <% if active_shifts.nil? || active_shifts.count.zero? %>
+      <strong>No hay turnos de trabajo activos</strong><br>
+      &nbsp;<br>
+    <% else %>
+      <table class="table table-bordered table-striped">
+        <thead>
+        <tr>
+          <th scope="col">ID</th>
+          <th scope="col">Detalles</th>
+          <th scope="col">Acciones</th>
+        </tr>
+        </thead>
+        <tbody>
+        <% active_shifts.sort_by{ |s| s.id }.each do |shift| %>
+          <tr>
+            <th scope="row"><a href="/shift/<%= shift.id %>"><%= shift.id %></a></th>
+            <td>
+              <strong><%= shift.type[:type] %></strong> - <%= shift_readable_dates(shift) %> <%= shift_holiday_label(shift) %><br>
+              Inicia <%= shift.start_date.to_s %> <%= shift.end_date == Date.parse('2099-01-01') ? 'sin fecha final' : "y finaliza #{shift.end_date.to_s}" %><br>
+              <% if shift.employee_id.nil? %>
+                <strong>No asignado aún</strong><br>
+              <% else %>
+                <% if shift[:archived] %>
+                  El turno fue cubierto por <a href="/employee/<%= shift.employee.id %>"><%= shift.employee.full_name %></a><br>
+                <% else %>
+                  Asignado a <a href="/employee/<%= shift.employee.id %>"><%= shift.employee.full_name %></a><br>
+                <% end %>
+                <% if shift.absences.count { |a| a.absence_date >= Date.today } > 0 %>
+                  Próximas ausencias: <%= shift.absences.count { |a| a.absence_date >= Date.today } %> -
+                  <% replacements = shift.absences.find_all { |a| a.absence_date >= Date.today && !a.replacement_id.nil? }.uniq { |a| a.replacement_employee.full_name } %>
+                  <%= replacements.count.zero? ? "Sin suplentes asignados" : "Suplente/s: #{replacements.map{ |a| "<a href='/employee/#{a.replacement_employee.id}'>#{a.replacement_employee.full_name}</a>" }.join(', ')}" %><br>
+                <% end %>
+              <% end %>
+            </td>
+            <td class="small">
+              <% if shift[:archived] %>
+                Turno archivado o eliminado<br>
+                <a href="/shift/copy/<%= shift.id %>">Crear un turno igual</a><br>
+              <% elsif shift.employee_id.nil? %>
+                <% if user_matches_type(:shift_assign) %>
+                  <a href="/shift/<%= shift.id %>">Asignar empleado</a><br>
+                <% else %>
+                  No puedes cargar asignar empleados<br>
+                <% end %>
+                <% if user_matches_type(:shift_new) %>
+                  <a href="/shift/edit/<%= shift.id %>">Editar turno</a><br>
+                  <a href="/shift/copy/<%= shift.id %>">Duplicar turno</a><br>
+                <% else %>
+                  No puedes modificar este turno
+                <% end %>
+                <% if user_matches_type(:shift_delete) %>
+                  <a href="/shift/delete/<%= shift.id %>">Eliminar turno</a>
+                <% end %>
+              <% else %>
+                <% if user_matches_type(:absence_new) %>
+                  <a href="/absence/new/<%= shift.employee.id%>?redir=/location/<%= location.id %>">Cargar ausencia</a><br>
+                <% else %>
+                  No puedes cargar ausencias<br>
+                <% end %>
+                <% if user_matches_type(:shift_unassign) %>
+                  <a class="confirm" href="/shift/unassign/<%= shift.id%>">Desasignar empleado</a><br>
+                <% else %>
+                  No puedes desasignar empleados<br>
+                <% end %>
+                <% if user_matches_type(:shift_new) %>
+                  <a href="/shift/edit/<%= shift.id %>">Editar turno</a><br>
+                  <a href="/shift/copy/<%= shift.id %>">Duplicar turno</a>
+                <% else %>
+                  No puedes modificar este turno
+                <% end %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+        </tbody>
+      </table>
+    <% end %>
+
+    <!-- Shift Backups -->
+    <% if user_matches_type(:shift_backup_new) %>
+      <a class="float-right btn btn-success text-shadow btn-shadow border border-dark border-top-0 border-right-0" href="/shift_backup/new/<%= location.id %>">Nuevo</a>
+    <% end %>
+    <h4>Pedidos de refuerzo</h4>
+    <% if location.shift_backups.nil? || location.shift_backups.count.zero? %>
+      <strong>No hay pedidos de refuerzo cargados</strong><br>
+      &nbsp;<br>
+    <% else %>
+      <table class="table table-bordered table-striped">
+        <thead>
+        <tr>
+          <th scope="col">ID</th>
+          <th scope="col">Detalles</th>
+          <th scope="col">Acciones</th>
+        </tr>
+        </thead>
+        <tbody>
+        <% location.shift_backups.sort_by{ |s| s.id }.each do |shift_backup| %>
+          <tr>
+            <th scope="row">
+              <% if user_matches_type(:shift_backup_assign) %>
+                <a href="/shift_backup/<%= shift_backup.id %>"><%= shift_backup.id %></a>
+              <% else %>
+                <%= shift_backup.id %>
+              <% end %>
+            </th>
+            <td>
+              <strong><%= shift_backup.type.type %></strong> - <%= human_readable_date shift_backup[:date], shift_backup[:start_time], shift_backup[:end_time] %> <%= date_is_holiday(shift_backup[:date]) %><br>
+              <% if shift_backup[:employee_id].nil? %>
+                <strong>No asignado aún</strong><br>
+              <% else %>
+                Asignado a <a href="/employee/<%= shift_backup.employee.id %>"><%= shift_backup.employee.full_name %></a><br>
+              <% end %>
+            </td>
+            <td class="small">
+              <% if shift_backup.employee_id.nil? %>
+                <% if user_matches_type(:shift_backup_assign) %>
+                  <a href="/shift_backup/<%= shift_backup.id %>">Asignar empleado</a><br>
+                <% end %>
+                <% if user_matches_type(:shift_backup_delete) %>
+                  <a href="/shift_backup/delete/<%= shift_backup.id %>">Eliminar pedido</a>
+                <% end %>
+              <% else %>
+                <% if user_matches_type(:shift_backup_unassign) %>
+                  <a class="confirm" href="/shift_backup/unassign/<%= shift_backup.id%>">Desasignar empleado</a>
+                <% else %>
+                  No puedes desasignar empleados
+                <% end %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+        </tbody>
+      </table>
+    <% end %>
+  </div>
+</div>
+
+<script>
+  $("h5[id^='toggle_']").click(function(event) {
+    event.preventDefault();
+    let target_name = $(this).attr('id').replace('toggle_', '');
+    $("div[id="+target_name+"]").collapse('toggle');
+  });
+  $('[data-toggle="tooltip"]').tooltip()
+</script>

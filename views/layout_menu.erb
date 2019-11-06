@@ -1,0 +1,10 @@
+<% menu_elements.each do |menu_obj| %>
+  <div class="mb-2 card text-center small card-shadow">
+    <a href="<%= menu_obj[:link] %>" class="no-decoration" title="<%= menu_obj[:title] %>">
+      <div class="card-header bg-success text-white text-shadow text-truncate">
+        <strong><%= menu_obj[:title] %></strong>
+      </div>
+      <img src="<%= menu_obj[:icon] %>" alt="" class="mx-auto my-2" style="max-width:48px">
+    </a>
+  </div>
+<% end %>

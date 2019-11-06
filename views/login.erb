@@ -1,0 +1,15 @@
+<% if params[:empty] == '1' %>
+<div class="alert alert-danger" role="alert">Es necesario setear usuario y contraseña</div>
+<% end %>
+
+<% if params[:failed] == '1' %>
+  <div class="alert alert-danger" role="alert">El usuario o contraseña ingresados son inválidos</div>
+<% end %>
+
+<h3>Iniciar sesión:</h3>
+<form action='/auth/login' method="post">
+  <%= em_input 'text', 'email', 'Email', 'example@e-mail.com' %>
+  <%= em_input 'password', 'password', 'Password', 'password' %>
+  <input type="hidden" name="redir" value="<%= params[:redir] %>">
+  <input type='submit' value="Acceder" />
+</form>
